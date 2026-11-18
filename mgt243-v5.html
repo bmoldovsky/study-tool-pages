@@ -4604,6 +4604,13 @@ function aiText(id) {
   return L.join('\n');
 }
 function baseUrl() { return location.href.split('#')[0]; }
+/* "Send feedback" (v5): the address is assembled at run time so it never sits in the file as plain text for scrapers */
+function feedbackAddr() { return ['UnChalked.help', 'gmail.com'].join('@'); }
+function feedbackHref() {
+  var d = S.deck && S.deck.meta;
+  var body = '\n\n\n(For context, please keep this:)\nApp: UnChalked v' + VERSION + (d ? '\nDeck: ' + plain(d.title) : '');
+  return 'mailto:' + feedbackAddr() + '?subject=' + encodeURIComponent('UnChalked suggestion') + '&body=' + encodeURIComponent(body);
+}
 /* "Share with friends" (v5): a friend pastes this link into their launcher's Add a deck → From a link and gets their own copy */
 function shareDeck() {
   var url = location.href.split('#')[0].split('?')[0], title = plain(S.deck.meta.title);
@@ -6410,6 +6417,7 @@ var A = {
   'study-one': function (el) { var id = el.dataset.id, k = kindOf(id); startSession(k === 'term' ? 'cards' : 'learn', [{ id: id, kind: k }], { shuffle: false, label: 'single item' }); },
   'copy-link': function (el) { copyText(baseUrl() + '#' + el.dataset.frag, 'Link'); },
   'share-deck': shareDeck,
+  'copy-feedback': function () { copyText(feedbackAddr(), 'Email address'); },
   'copy-ai': function (el) { var x = aiText(el.dataset.id); if (x) copyText(x, (S.idx.q[el.dataset.id] ? 'Question' : 'Card') + ' and its context'); },
   'edit-item': function (el) { var id = el.dataset.id; if (S.idx.term[id]) openTermForm(id); else if (S.idx.q[id]) openQuestionForm(id); },
   'edit-tab': function (el) { S.editTab = el.dataset.tab; S.editSearch = ''; S.focus = '#tab-' + el.dataset.tab; render(); },
@@ -6548,6 +6556,9 @@ function showSettings() {
       return '<div><label class="chk"><input type="radio" name="s-mastery" id="s-mastery-' + o[0] + '" value="' + o[0] + '"' + (cur === o[0] ? ' checked' : '') + '> ' + esc(o[1]) + '</label></div>';
     }).join('') + '<p class="help">Only changes how progress is counted and shown; nothing is deleted.</p></fieldset>' : '') +
     '<fieldset id="sync-box" data-mode="' + (syncOn() ? 'on' : 'off') + '">' + syncBoxHtml() + '</fieldset>' +
+    '<fieldset id="s-feedback-box"><legend>Feedback</legend><p class="small muted" style="margin:0 0 8px">Ideas, bugs, or something confusing? Send a note: it opens your email app with a message to UnChalked.</p><div class="row">' +
+      '<a class="btn" id="s-feedback" href="' + esc(feedbackHref()) + '">✉ Send feedback</a>' +
+      '<button type="button" class="btn ghost" data-action="copy-feedback" id="s-feedback-copy">Copy email address</button></div></fieldset>' +
     (S.deck ? '<fieldset><legend>Reset</legend><p class="small muted" style="margin:0 0 8px">Each asks for confirmation first and offers to export your progress. Neither changes the deck saved in the HTML file.</p><div class="row">' +
       '<button type="button" class="btn danger" data-action="reset-progress" id="s-reset-progress">Reset progress for this deck</button>' +
       '<button type="button" class="btn danger" data-action="reset-all" id="s-reset-all">Reset everything for this deck</button></div></fieldset>' : '') + '</form>',

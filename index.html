@@ -116,6 +116,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   <button type="button" class="add" id="add-deck"><span class="plus" aria-hidden="true">+</span><span>Add a deck<small>Paste the deck JSON an AI made, or choose a saved .html file. It goes live here in about a minute.</small></span></button>
   <footer class="tiny muted">
     <p>Any HTML file in the repo shows up here (files starting with “_” are hidden). <a id="repo-link" href="#">Open the repo on GitHub</a></p>
+    <p>Ideas or problems? <a id="feedback-link" href="#">✉ Send feedback</a></p>
   </footer>
 </main>
 
@@ -151,6 +152,8 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   }
   var REPO = repoName(), BRANCH = 'main';
   $('repo-link').href = 'https://github.com/' + REPO;
+  /* feedback address assembled at run time so it never sits in the file as plain text for scrapers */
+  $('feedback-link').href = 'mailto:' + ['UnChalked.help', 'gmail.com'].join('@') + '?subject=' + encodeURIComponent('UnChalked suggestion') + '&body=' + encodeURIComponent('\n\n\n(For context, please keep this:)\nFrom: the UnChalked launcher');
   /* lets every study file on this site show a "‹ Decks" button back to this page */
   try { localStorage.setItem('studytool:launcher', location.href.split('#')[0].split('?')[0]); } catch (e) {}
 
@@ -299,7 +302,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     var cfg = useToken ? syncCfg() : null, h = { Accept: 'application/vnd.github+json' };
     if (cfg) h.Authorization = 'Bearer ' + cfg.token;
     return fetch(GH + '/repos/' + REPO + '/contents/', { headers: h, cache: 'no-store' }).then(function (res) {
-      if (res.status === 401 && cfg) return listContents(false);   /* a bad or expired token never blocks the list */
+      if (cfg && (res.status === 401 || res.status === 403 || res.status === 404)) return listContents(false);   /* a bad, expired or too-narrow token never blocks the list */
       if (!res.ok) throw new Error(res.status === 403 || res.status === 429 ? 'busy' : 'http ' + res.status);
       return res.json();
     });
@@ -586,7 +589,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     var errs = checkDeck(deck);
     if (errs.length) { msg('add-msg', 'bad', 'This deck has problems to fix first' + (A.src === 'link' ? ' (tell your friend)' : ' (ask the AI to correct them)') + ':<ul>' + errs.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'); showPlanButton(false); return; }
     var app = newestApp();
-    if (A.src === 'json' && !app) { msg('add-msg', 'bad', 'There is no UnChalked deck on the site yet to take the app from. Add one .html file first (.html file), then JSON works.'); showPlanButton(false); return; }
+    if (A.src !== 'file' && !app) { msg('add-msg', 'bad', 'There is no UnChalked deck on your site yet to take the app from. Add one .html file first (.html file), then ' + (A.src === 'link' ? 'shared links' : 'JSON') + ' work.'); showPlanButton(false); return; }
     var same = siteDecks().filter(function (x) { return x.info.id === deck.meta.id; });
     same.sort(function (a, b) { return vnum(b.info.version) - vnum(a.info.version); });
     var linked = A.src === 'link' ? same.filter(function (x) { return x.info.sharedFrom && x.info.sharedFrom.url === A.linkUrl; }) : [];
@@ -619,9 +622,9 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
       h += choice('replace', 'Replace ' + P.target, 'The site’s copy becomes exactly this deck.') + choice('new', 'Publish as a separate file', 'Both files stay; they share progress because the ID is the same.');
     }
     if (P.mode === 'new') h += '<label class="f" for="add-name">File name</label><input type="text" id="add-name" value="' + esc(P.name) + '" autocapitalize="off" spellcheck="false">';
-    var newer = P.app && vnum(P.app.info.version) > vnum(P.fileVer);
     var appNote = A.src === 'json' ? 'Built with UnChalked v' + esc(P.app.info.version) + ' (taken from ' + esc(P.app.name) + ').'
-      : newer ? 'It will use your newest app version, UnChalked v' + esc(P.app.info.version) + ' (the deck itself is unchanged).' : 'Uses the app version inside the ' + (A.src === 'link' ? 'shared deck' : 'file') + ' (v' + esc(P.fileVer || '?') + ').';
+      : A.src === 'link' ? 'Only the deck is copied; it runs in your own app (UnChalked v' + esc(P.app.info.version) + ').'
+      : P.app && vnum(P.app.info.version) >= vnum(P.fileVer) ? 'It will use your newest app version, UnChalked v' + esc(P.app.info.version) + ' (the deck itself is unchanged).' : 'Uses the app version inside the file (v' + esc(P.fileVer || '?') + '), newer than your site’s.';
     h += '<p class="tiny muted" style="margin-top:10px">' + appNote + ' It goes live about a minute after publishing.</p>';
     $('add-plan').innerHTML = h;
     Array.prototype.forEach.call(document.querySelectorAll('input[name=add-mode]'), function (r) { r.onchange = function () { P.mode = r.value; renderPlan(); }; });
@@ -636,7 +639,9 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     var go = $('add-go'); go.disabled = true; $('add-check').disabled = true;
     msg('add-msg', 'warn', P.isUpdate ? 'Updating…' : 'Publishing…');
     var deck = JSON.parse(JSON.stringify(P.deck)), counts = null;
-    var useOwn = A.src !== 'json' && !(P.app && vnum(P.app.info.version) > vnum(P.fileVer));
+    /* A shared link only ever contributes deck DATA: it is wrapped in this site's own app, never the other site's code (which would run
+       here, next to this site's token). Only your own .html file may bring a newer app, and only when the site has no newer one. */
+    var useOwn = A.src === 'file' && !(P.app && vnum(P.app.info.version) >= vnum(P.fileVer));
     var tplP = useOwn ? Promise.resolve(A.fileText)
       : fetch(encodeURI(P.app.name), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + P.app.name + ' to take the app from.'); return r.text(); });
     var baseP = P.mode === 'merge' ? fetch(encodeURI(P.target), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + P.target + ' to merge into.'); return r.text(); }) : Promise.resolve('');

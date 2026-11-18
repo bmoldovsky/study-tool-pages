@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-title" content="Study">
+<meta name="studytool-launcher" content="1">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131518" media="(prefers-color-scheme: dark)">
 <title>Study Decks</title>
 <style>
 :root{
@@ -47,6 +53,9 @@ h1{font-size:1.45rem;line-height:1.2;margin:0}
 .pill.done{background:var(--ok-soft);color:var(--ok)}
 .pill.new{background:var(--warn-soft);color:var(--warn)}
 .file{margin:8px 0 0;font-size:.76rem;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
+.add{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--accent);border:1.5px dashed var(--border);border-radius:14px;padding:14px 16px;font-weight:600}
+.add .plus{flex:none;width:32px;height:32px;border-radius:9px;background:var(--accent-soft);display:grid;place-items:center;font-size:1.3rem;line-height:1}
+.add small{display:block;font-weight:400;color:var(--muted);font-size:.8rem;margin-top:2px}
 .note{background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:14px 16px;margin:0}
 footer{margin-top:22px}
 footer a{color:var(--accent)}
@@ -65,6 +74,7 @@ footer a{color:var(--accent)}
   </header>
   <ul class="list" id="list"></ul>
   <p class="note small muted" id="empty" hidden></p>
+  <a class="add" id="add-deck" href="#" target="_blank" rel="noopener" style="margin-top:12px"><span class="plus" aria-hidden="true">+</span><span>Add a deck<small>Opens GitHub’s upload page: drop in the .html file (from <b>Save as HTML</b>), then tap <b>Commit changes</b>. It shows up here in about a minute.</small></span></a>
   <footer class="tiny muted">
     <p>Any HTML file you upload to the repo shows up here automatically (files starting with “_” are hidden). <a id="repo-link" href="#">Open the repo on GitHub</a></p>
   </footer>
@@ -87,6 +97,9 @@ footer a{color:var(--accent)}
   }
   var REPO = repoName();
   $('repo-link').href = 'https://github.com/' + REPO;
+  $('add-deck').href = 'https://github.com/' + REPO + '/upload/main';
+  /* lets every study file on this site show a "‹ Decks" button back to this page */
+  try { localStorage.setItem('studytool:launcher', location.href.split('#')[0].split('?')[0]); } catch (e) {}
 
   function load() { try { var c = JSON.parse(localStorage.getItem(CACHE)); return c && c.files ? c : null; } catch (e) { return null; } }
   function save(c) { try { localStorage.setItem(CACHE, JSON.stringify(c)); } catch (e) {} }

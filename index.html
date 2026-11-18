@@ -57,6 +57,20 @@ h1{font-size:1.45rem;line-height:1.2;margin:0}
 .acts{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
 .btn.upd{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .pill.shared{background:var(--surface-2);color:var(--text)}
+.more-row{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px;margin-top:-4px}
+.btn.icon{padding:5px 10px;letter-spacing:.1em}
+.checklist,.updbar{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin:0 0 14px}
+.updbar{border-color:var(--accent);background:var(--accent-soft)}
+.checklist h2,.updbar h2{font-size:1rem;margin:0 0 8px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.steps li{display:flex;gap:10px;align-items:flex-start}
+.steps .n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:700;background:var(--surface-2);color:var(--muted)}
+.steps li.done .n{background:var(--ok-soft);color:var(--ok)}
+.steps li.done b{text-decoration:line-through;color:var(--muted)}
+.steps p{margin:2px 0 6px;font-size:.86rem;color:var(--muted)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-decoration:underline;cursor:pointer}
+.updbar ul{margin:4px 0 10px;padding-left:1.2em;font-size:.88rem}
 .course{font-size:.75rem;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 2px}
 .card h2{font-size:1.08rem;line-height:1.3;margin:0 0 6px;color:var(--text)}
 .counts{margin:0 0 8px;font-size:.88rem;color:var(--muted)}
@@ -110,13 +124,15 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     </div>
     <button type="button" class="btn" id="refresh">Refresh</button>
   </header>
+  <section class="updbar" id="updbar" hidden aria-live="polite"></section>
+  <section class="checklist" id="checklist" hidden aria-labelledby="cl-h"></section>
   <div class="syncbar" id="syncbar"><span class="dot" aria-hidden="true"></span><span class="txt" id="sync-txt"></span><button type="button" class="btn sm" id="sync-btn">Set up</button></div>
   <ul class="list" id="list"></ul>
   <p class="note small muted" id="empty" hidden></p>
   <button type="button" class="add" id="add-deck"><span class="plus" aria-hidden="true">+</span><span>Add a deck<small>Paste the deck JSON an AI made, or choose a saved .html file. It goes live here in about a minute.</small></span></button>
   <footer class="tiny muted">
     <p>Any HTML file in the repo shows up here (files starting with “_” are hidden). <a id="repo-link" href="#">Open the repo on GitHub</a></p>
-    <p>Ideas or problems? <a id="feedback-link" href="#">✉ Send feedback</a></p>
+    <p>Ideas or problems? <a id="feedback-link" href="#">✉ Send feedback</a> · <span id="ver-line"></span></p>
   </footer>
 </main>
 
@@ -135,7 +151,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
 <script>
 (function () {
   'use strict';
-  var CACHE = 'launcher:v1', SYNC = 'studytool:sync', DEFAULT_REPO = 'bmoldovsky/study-tool-pages', GH = 'https://api.github.com';
+  var CACHE = 'launcher:v1', SYNC = 'studytool:sync', DEFAULT_REPO = 'bmoldovsky/unchalked', GH = 'https://api.github.com';
   var GIST_DESC = 'Study Tool progress sync (managed by the app)', GIST_META = 'studytool-sync.json';   /* same names the app uses, so every version finds the same Gist */
   var $ = function (id) { return document.getElementById(id); };
   var LOCAL_OK = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i;   /* plain-http links allowed only for local testing */
@@ -151,11 +167,21 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     return DEFAULT_REPO;
   }
   var REPO = repoName(), BRANCH = 'main';
+  var LAUNCHER_VERSION = '1.0';
+  var UPSTREAM = (function () { var q = new URLSearchParams(location.search).get('upstream'); return q && LOCAL_OK.test(q) ? q : 'https://bmoldovsky.github.io/unchalked/'; })();   /* the UnChalked template this site follows for updates */
+  var IS_UPSTREAM = REPO.toLowerCase() === 'bmoldovsky/unchalked' || new URL('./', location.href).href === UPSTREAM;
   $('repo-link').href = 'https://github.com/' + REPO;
   /* feedback address assembled at run time so it never sits in the file as plain text for scrapers */
   $('feedback-link').href = 'mailto:' + ['UnChalked.help', 'gmail.com'].join('@') + '?subject=' + encodeURIComponent('UnChalked suggestion') + '&body=' + encodeURIComponent('\n\n\n(For context, please keep this:)\nFrom: the UnChalked launcher');
   /* lets every study file on this site show a "‹ Decks" button back to this page */
-  try { localStorage.setItem('studytool:launcher', location.href.split('#')[0].split('?')[0]); } catch (e) {}
+  /* several sites can share one origin (name.github.io/a and /b): every saved key below is per repository, and decks pick the launcher in their own folder */
+  CACHE = 'launcher:v1:' + REPO;
+  try {
+    var me = location.href.split('#')[0].split('?')[0], ls = JSON.parse(localStorage.getItem('studytool:launchers') || '[]');
+    ls = (Array.isArray(ls) ? ls : []).filter(function (u) { return u !== me; }); ls.unshift(me);
+    localStorage.setItem('studytool:launchers', JSON.stringify(ls.slice(0, 10)));
+    localStorage.setItem('studytool:launcher', me);   /* older decks read this single key */
+  } catch (e) {}
 
   function load() { try { var c = JSON.parse(localStorage.getItem(CACHE)); return c && c.files ? c : null; } catch (e) { return null; } }
   function save(c) { try { localStorage.setItem(CACHE, JSON.stringify(c)); } catch (e) {} }
@@ -209,7 +235,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   function ownerOf(url) { try { var h = new URL(url).hostname; return /\.github\.io$/i.test(h) ? h.split('.')[0] : h; } catch (e) { return ''; } }
 
   /* ---------- shared decks: update checks (state kept in this browser only) ---------- */
-  var SHARED = 'launcher:shared';
+  var SHARED = 'launcher:shared:' + REPO;
   function sharedState() { try { return JSON.parse(localStorage.getItem(SHARED)) || {}; } catch (e) { return {}; } }
   function saveShared(s) { try { localStorage.setItem(SHARED, JSON.stringify(s)); } catch (e) {} }
   function updateFor(info) { var s = info.sharedFrom && sharedState()[info.sharedFrom.url]; return !!(s && s.deckHash && info.sharedFrom.deckHash && s.deckHash !== info.sharedFrom.deckHash); }
@@ -288,10 +314,18 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
         }
         var sh = el('button', 'btn sm', 'Share with friends'); sh.type = 'button'; sh.setAttribute('aria-label', 'Share ' + i.title + ' with friends');
         sh.onclick = function () { shareDeck(r.f.name, i.title); };
-        acts.appendChild(sh); li.appendChild(acts);
+        acts.appendChild(sh);
+        var more = el('button', 'btn sm icon', '⋯'); more.type = 'button'; more.setAttribute('aria-label', 'More for ' + i.title); more.setAttribute('aria-expanded', 'false');
+        var mrow = el('div', 'more-row'); mrow.hidden = true;
+        var rn = el('button', 'btn sm', 'Rename file'); rn.type = 'button'; rn.onclick = function () { renameDeck(r.f.name, i.title); };
+        var rm = el('button', 'btn sm danger', 'Remove from site'); rm.type = 'button'; rm.onclick = function () { removeDeck(r.f.name, i.title); };
+        mrow.appendChild(rn); mrow.appendChild(rm);
+        more.onclick = function () { mrow.hidden = !mrow.hidden; more.setAttribute('aria-expanded', String(!mrow.hidden)); };
+        acts.appendChild(more); li.appendChild(acts); li.appendChild(mrow);
       }
       list.appendChild(li);
     });
+    renderChecklist(); if (!updBusy) renderUpdate();
     var empty = $('empty');
     empty.hidden = rows.length > 0;
     if (!rows.length) empty.textContent = c ? 'No study files in the repo yet. Tap Add a deck below.' : 'Couldn’t load the list yet. Check your connection and tap Refresh.';
@@ -492,8 +526,9 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     var head = tpl.slice(0, m.index).replace(/<title>[^<]*<\/title>/, '<title>' + esc(plain(deck.meta.title || 'UnChalked')) + '</title>');
     return head + m[1] + json + m[3] + tpl.slice(m.index + m[0].length);
   }
-  function b64(str) {
-    var bytes = new TextEncoder().encode(str), bin = '', CH = 0x8000;
+  function b64(str) { return b64bytes(new TextEncoder().encode(str)); }
+  function b64bytes(bytes) {
+    var bin = '', CH = 0x8000;
     for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
     return btoa(bin);
   }
@@ -525,14 +560,21 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     var body = $('add-body'), foot = $('add-foot');
     var seg = function (v, label) { return '<button type="button" class="btn sm" id="src-' + v + '" aria-pressed="' + (A.src === v) + '">' + label + '</button>'; };
     var h = '<div class="seg" role="group" aria-label="Source">' + seg('json', 'Paste JSON') + seg('link', 'From a link') + seg('file', '.html file') + '</div>';
-    if (A.src === 'json') h += '<label class="f" for="add-json">Deck JSON from the AI</label><textarea id="add-json" spellcheck="false" placeholder="Paste the whole ```json block here">' + esc(A.text) + '</textarea><p class="tiny muted">For the deck prompt’s add or upgrade jobs (only new items), you can merge them into the existing deck in the next step.</p>';
+    if (A.src === 'json') h += '<label class="f" for="add-json">Deck JSON from the AI</label><textarea id="add-json" spellcheck="false" placeholder="Paste the whole ```json block here">' + esc(A.text) + '</textarea><p class="tiny muted">No JSON yet? <button type="button" class="linkbtn" id="add-prompt">Copy the AI deck prompt</button>, paste it into any AI chat with your class materials, and paste its answer here. For the prompt’s add or upgrade jobs (only new items), you can merge them into the existing deck in the next step.</p>';
     else if (A.src === 'link') h += '<label class="f" for="add-link">Link to a friend’s deck</label><input type="text" id="add-link" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="https://name.github.io/…/deck.html" value="' + esc(A.link) + '"><p class="tiny muted">Paste the link (or the whole message) a friend shared. You get your own copy with your own progress, and an <b>Update available</b> button when they change it.</p>';
     else h += '<label class="f" for="add-file">An UnChalked .html file (from Save as HTML)</label><input type="file" id="add-file" accept=".html,.htm,text/html">' + (A.fileName ? '<p class="small">Chosen: <b>' + esc(A.fileName) + '</b></p>' : '');
     h += '<div id="add-plan"></div><div id="add-msg"></div>';
     body.innerHTML = h;
     foot.innerHTML = '<button type="button" class="btn" data-close>Cancel</button><button type="button" class="btn primary" id="add-check">Check</button>';
     ['json', 'link', 'file'].forEach(function (v) { $('src-' + v).onclick = function () { keepText(); A.src = v; A.plan = null; renderAdd(); }; });
-    if (A.src === 'json') $('add-json').oninput = function () { if (A.plan) { A.plan = null; showPlanButton(false, true); } };
+    if (A.src === 'json') {
+      $('add-json').oninput = function () { if (A.plan) { A.plan = null; showPlanButton(false, true); } };
+      $('add-prompt').onclick = function () {
+        if (!PROMPT) { loadPrompt().then(function (t) { msg('add-msg', t ? 'warn' : 'bad', t ? 'Prompt loaded. Tap Copy the AI deck prompt again.' : 'Couldn’t load the deck prompt. Check your connection.'); }); return; }
+        copy(PROMPT).then(function (ok) { msg('add-msg', ok ? 'ok' : 'bad', ok ? 'Deck prompt copied. Paste it into any AI chat with your class materials.' : 'Your browser blocked copying.'); });
+      };
+      loadPrompt();   /* ready before the tap: iPhones only allow copying inside the tap itself */
+    }
     else if (A.src === 'link') { $('add-link').oninput = function () { if (A.plan) { A.plan = null; showPlanButton(false, true); } }; $('add-link').onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); check(); } }; }
     else $('add-file').onchange = function (e) {
       var f = e.target.files && e.target.files[0]; if (!f) return;
@@ -624,7 +666,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     if (P.mode === 'new') h += '<label class="f" for="add-name">File name</label><input type="text" id="add-name" value="' + esc(P.name) + '" autocapitalize="off" spellcheck="false">';
     var appNote = A.src === 'json' ? 'Built with UnChalked v' + esc(P.app.info.version) + ' (taken from ' + esc(P.app.name) + ').'
       : A.src === 'link' ? 'Only the deck is copied; it runs in your own app (UnChalked v' + esc(P.app.info.version) + ').'
-      : P.app && vnum(P.app.info.version) >= vnum(P.fileVer) ? 'It will use your newest app version, UnChalked v' + esc(P.app.info.version) + ' (the deck itself is unchanged).' : 'Uses the app version inside the file (v' + esc(P.fileVer || '?') + '), newer than your site’s.';
+      : P.app ? 'Only the deck is taken from the file; it runs in your own app (UnChalked v' + esc(P.app.info.version) + ').' : 'Your site has no deck yet, so this first one keeps the app inside the file (v' + esc(P.fileVer || '?') + ').';
     h += '<p class="tiny muted" style="margin-top:10px">' + appNote + ' It goes live about a minute after publishing.</p>';
     $('add-plan').innerHTML = h;
     Array.prototype.forEach.call(document.querySelectorAll('input[name=add-mode]'), function (r) { r.onchange = function () { P.mode = r.value; renderPlan(); }; });
@@ -641,14 +683,14 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     var deck = JSON.parse(JSON.stringify(P.deck)), counts = null;
     /* A shared link only ever contributes deck DATA: it is wrapped in this site's own app, never the other site's code (which would run
        here, next to this site's token). Only your own .html file may bring a newer app, and only when the site has no newer one. */
-    var useOwn = A.src === 'file' && !(P.app && vnum(P.app.info.version) >= vnum(P.fileVer));
+    var useOwn = A.src === 'file' && !P.app;   /* a file's own code is used only for a site's very first deck; new app versions arrive through template updates */
     var tplP = useOwn ? Promise.resolve(A.fileText)
-      : fetch(encodeURI(P.app.name), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + P.app.name + ' to take the app from.'); return r.text(); });
-    var baseP = P.mode === 'merge' ? fetch(encodeURI(P.target), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + P.target + ' to merge into.'); return r.text(); }) : Promise.resolve('');
+      : fetch(encodeURI(P.app.name), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + esc(P.app.name) + ' to take the app from.'); return r.text(); });
+    var baseP = P.mode === 'merge' ? fetch(encodeURI(P.target), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + esc(P.target) + ' to merge into.'); return r.text(); }) : Promise.resolve('');
     var html = '';
     Promise.all([tplP, baseP]).then(function (got) {
       if (P.mode === 'merge') {
-        var base = deckOf(got[1]); if (!base) throw new Error(P.target + ' has no readable deck to merge into.');
+        var base = deckOf(got[1]); if (!base) throw new Error(esc(P.target) + ' has no readable deck to merge into.');
         var m = mergeDecks(base, deck); deck = m.deck; counts = m.n;
       }
       if (A.src === 'link') { deck.meta = deck.meta || {}; deck.meta.sharedFrom = { url: A.linkUrl, deckHash: P.srcHash }; }   /* lets this copy notice when the friend updates theirs */
@@ -657,7 +699,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     }).then(function (r) {
       if (r.status === 401) throw new Error('GitHub rejected the token (expired?). Tap Token at the top and connect a new one.');
       var sha = r.status === 200 && r.json && r.json.sha ? r.json.sha : null;
-      if (P.mode === 'new' && sha) throw new Error('A file named ' + name + ' already exists. Choose another name, or Replace.');
+      if (P.mode === 'new' && sha) throw new Error('A file named ' + esc(name) + ' already exists. Choose another name, or Replace.');
       var verb = sha ? 'Update ' : 'Add ';
       var body = { message: verb + name + (A.src === 'link' ? ' (shared by ' + ownerOf(A.linkUrl) + ')' : '') + ' from the UnChalked launcher', content: b64(html), branch: BRANCH };
       if (sha) body.sha = sha;
@@ -692,17 +734,209 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     }, n ? 10000 : 20000);
   }
 
+  /* ---------- rename / remove a deck (GitHub API; progress is kept by deck ID either way) ---------- */
+  function needToken() { if (syncCfg()) return false; openToken(false); return true; }
+  function shaOf(name, token) {
+    return gh('/repos/' + REPO + '/contents/' + encodeURIComponent(name) + '?ref=' + encodeURIComponent(BRANCH), { token: token }).then(function (r) {
+      if (r.status === 401) throw new Error('GitHub rejected the token (expired?). Tap Token at the top and connect a new one.');
+      return r.status === 200 && r.json && r.json.sha ? r.json.sha : null;
+    });
+  }
+  function writeErr(r) {
+    if (r.status === 401) return 'GitHub rejected the token (expired?). Tap Token at the top and connect a new one.';
+    if (r.status === 403 || r.status === 404) return 'This token can’t change files in ' + REPO + '. Edit the token on GitHub: Only select repositories → ' + REPO.split('/')[1] + ', Contents: Read and write.';
+    return r.status ? 'GitHub answered with an error (' + r.status + ').' : 'Couldn’t reach GitHub. Check your connection.';
+  }
+  function removeDeck(name, title) {
+    if (needToken()) return;
+    if (!confirm('Remove “' + title + '” (' + name + ') from your site?\n\nYour progress stays saved and comes back if you add this deck again. Friends who copied it keep their copy but stop getting updates.')) return;
+    var cfg = syncCfg(); $('status').textContent = 'Removing ' + name + '…';
+    shaOf(name, cfg.token).then(function (sha) {
+      if (!sha) throw new Error(name + ' is already gone from GitHub.');
+      return gh('/repos/' + REPO + '/contents/' + encodeURIComponent(name), { method: 'DELETE', token: cfg.token, body: { message: 'Remove ' + name + ' from the UnChalked launcher', sha: sha, branch: BRANCH } });
+    }).then(function (r) {
+      if (r.status !== 200) throw new Error(writeErr(r));
+      var c = load() || { files: [], decks: {} };
+      c.files = c.files.filter(function (f) { return f.name !== name; }); delete c.decks[name]; delete pending[name];
+      save(c); render(c, 'Removed ' + name + '.');
+    }).catch(function (e) { $('status').textContent = e.message; });
+  }
+  function renameDeck(name, title) {
+    if (needToken()) return;
+    var to = prompt('New file name for “' + title + '”.\n\nYour progress stays. Links you already shared to ' + name + ' will stop working.', name);
+    if (to == null) return;
+    to = cleanName(to);
+    if (to.toLowerCase() === name.toLowerCase()) return;
+    if (/^(index|404)\.html?$/i.test(to) || !/^[A-Za-z0-9][A-Za-z0-9._-]*\.html?$/.test(to)) { $('status').textContent = 'Use letters, numbers and dashes, like fin331-exam2.html (not index.html).'; return; }
+    if ((load() || { files: [] }).files.some(function (f) { return f.name.toLowerCase() === to.toLowerCase(); })) { $('status').textContent = 'A file named ' + to + ' already exists.'; return; }
+    var cfg = syncCfg(), text = ''; $('status').textContent = 'Renaming ' + name + ' to ' + to + '…';
+    fetch(encodeURI(name), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t load ' + name + '.'); return r.text(); }).then(function (t) {
+      text = t;
+      return gh('/repos/' + REPO + '/contents/' + encodeURIComponent(to), { method: 'PUT', token: cfg.token, body: { message: 'Rename ' + name + ' to ' + to + ' from the UnChalked launcher', content: b64(text), branch: BRANCH } });
+    }).then(function (r) {
+      if (r.status !== 201 && r.status !== 200) throw new Error(writeErr(r));
+      var newSha = r.json && r.json.content ? r.json.content.sha : '';
+      return shaOf(name, cfg.token).then(function (sha) {
+        return sha ? gh('/repos/' + REPO + '/contents/' + encodeURIComponent(name), { method: 'DELETE', token: cfg.token, body: { message: 'Rename ' + name + ' to ' + to + ' (remove old name)', sha: sha, branch: BRANCH } }) : { status: 200 };
+      }).then(function (d) {
+        var c = load() || { files: [], decks: {} };
+        var old = c.decks[name]; c.files = c.files.filter(function (f) { return f.name !== name; }); delete c.decks[name];
+        c.files.push({ name: to, sha: newSha }); c.decks[to] = { sha: newSha, info: old ? old.info : parse(to, text) };
+        pending[to] = hash(text); save(c); render(c, d.status === 200 ? 'Renamed to ' + to + '.' : 'Copied to ' + to + ', but the old file could not be removed: ' + writeErr(d)); watch(to, 0);
+      });
+    }).catch(function (e) { $('status').textContent = e.message; });
+  }
+
+  /* ---------- first-run checklist ---------- */
+  var CL = 'launcher:checklist:' + REPO, PROMPT = '';
+  function isIOS() { return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1); }
+  function isMobile() { return isIOS() || /Android/i.test(navigator.userAgent); }
+  function isStandalone() { return window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+  function promptUrls() { var u = [UPSTREAM + 'DECK_PROMPT.md']; if (UPSTREAM !== new URL('./', location.href).href) u.push('DECK_PROMPT.md'); return u; }
+  function loadPrompt() {   /* fetched ahead of time: iPhones only allow copying right inside the tap */
+    if (PROMPT) return Promise.resolve(PROMPT);
+    var urls = promptUrls();
+    function next(k) {
+      if (k >= urls.length) return '';
+      return fetch(urls[k], { cache: 'no-cache' }).then(function (r) { return r.ok ? r.text() : ''; }, function () { return ''; }).then(function (t) { if (t && /Deck Builder Prompt/.test(t)) { PROMPT = t; return t; } return next(k + 1); });
+    }
+    return next(0);
+  }
+  function copyPrompt() {
+    if (!PROMPT) { loadPrompt().then(function (t) { $('status').textContent = t ? 'Prompt loaded. Tap Copy AI deck prompt again.' : 'Couldn’t load the deck prompt. Check your connection.'; }); return; }
+    copy(PROMPT).then(function (ok) {
+      $('status').textContent = ok ? 'Deck prompt copied. Paste it into any AI chat, add your class materials, then paste the JSON it gives you into Add a deck.' : 'Your browser blocked copying. Open the prompt with the link under the button instead.';
+    });
+  }
+  function renderChecklist() {
+    var box = $('checklist'), hidden = false;
+    try { hidden = localStorage.getItem(CL) === 'hidden'; } catch (e) {}
+    var token = !!syncCfg(), deck = siteDecks().some(function (x) { return x.info.id && x.info.id !== 'demo-deck'; }), home = isStandalone();
+    var steps = [
+      { done: token, t: 'Connect your GitHub token', p: home && !token ? 'The home-screen app keeps its own storage, so paste your token once in here too.' : 'Turns on sync across devices and adding decks from here.', b: '<button type="button" class="btn sm primary" data-cl="token">' + (token ? 'Token' : 'Set up') + '</button>' },
+      { done: deck, t: 'Make your first deck', p: 'Copy the deck prompt, paste it into any AI chat (ChatGPT, Claude, Gemini…) with your class materials, then paste the JSON it gives you into Add a deck.',
+        b: '<button type="button" class="btn sm" data-cl="prompt">Copy AI deck prompt</button> <button type="button" class="btn sm" data-cl="add">Add a deck</button><p class="tiny" style="margin:6px 0 0"><a href="' + esc(promptUrls()[0]) + '" target="_blank" rel="noopener">Open the prompt as a page</a></p>' }
+    ];
+    if (isMobile()) steps.push({ done: home, t: 'Add UnChalked to your home screen', p: isIOS() ? 'In Safari, tap Share, then Add to Home Screen. Open it from there from now on.' : 'In Chrome, open the ⋮ menu, then Add to Home screen (or Install app).', b: '' });
+    var all = steps.every(function (s) { return s.done; });
+    box.hidden = hidden || all;
+    if (box.hidden) return;
+    box.innerHTML = '<h2 id="cl-h">Get started</h2><ol class="steps">' + steps.map(function (s, k) {
+      return '<li class="' + (s.done ? 'done' : '') + '"><span class="n" aria-hidden="true">' + (s.done ? '✓' : k + 1) + '</span><div><b>' + esc(s.t) + '</b>' + (s.done ? ' <span class="sr-only">(done)</span>' : '<p>' + esc(s.p) + '</p>' + s.b) + '</div></li>';
+    }).join('') + '</ol><p class="tiny muted" style="margin:10px 0 0"><button type="button" class="linkbtn" data-cl="hide">Hide this checklist</button></p>';
+    if (!deck) loadPrompt();
+  }
+  $('checklist').addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-cl]'); if (!b) return;
+    var k = b.getAttribute('data-cl');
+    if (k === 'token') openToken(false); else if (k === 'prompt') copyPrompt(); else if (k === 'add') openAdd();
+    else if (k === 'hide') { try { localStorage.setItem(CL, 'hidden'); } catch (er) {} renderChecklist(); }
+  });
+
+  /* ---------- template updates: this site follows the UnChalked template ---------- */
+  var UPD = 'launcher:update:' + REPO;
+  function updState() { try { return JSON.parse(localStorage.getItem(UPD)) || {}; } catch (e) { return {}; } }
+  function checkTemplate(force) {
+    if (IS_UPSTREAM) { renderUpdate(); return; }
+    var st = updState();
+    if (!force && st.checkedAt && Date.now() - st.checkedAt < 6 * 3600e3) { renderUpdate(); return; }
+    fetch(UPSTREAM + 'version.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
+      if (v && v.app && v.launcher) { try { localStorage.setItem(UPD, JSON.stringify({ checkedAt: Date.now(), v: v })); } catch (e) {} }
+      renderUpdate();
+    }).catch(function () { renderUpdate(); });
+  }
+  function updateInfo() {
+    var v = updState().v; if (!v || IS_UPSTREAM) return null;
+    var decks = siteDecks().filter(function (x) { return x.info.version && vnum(x.info.version) < vnum(v.app); });
+    var launcher = vnum(v.launcher) > vnum(LAUNCHER_VERSION);
+    return decks.length || launcher ? { v: v, decks: decks, launcher: launcher } : null;
+  }
+  var updBusy = false;
+  function renderUpdate(note) {
+    var box = $('updbar'), u = updateInfo();
+    if (!u && !note) { box.hidden = true; return; }
+    box.hidden = false;
+    if (!u) { box.innerHTML = '<h2>UnChalked update</h2><p class="small" style="margin:0">' + note + '</p>'; return; }
+    var what = [];
+    if (u.decks.length) what.push('the app in ' + plural(u.decks.length, 'deck') + ' (to v' + esc(u.v.app) + ')');
+    if (u.launcher) what.push('this launcher (to ' + esc(u.v.launcher) + ')');
+    box.innerHTML = '<h2>UnChalked update available</h2><p class="small" style="margin:0 0 4px">Updates ' + what.join(' and ') + '. Your decks’ content and your progress don’t change.</p>' +
+      (Array.isArray(u.v.notes) && u.v.notes.length ? '<p class="small" style="margin:6px 0 0"><b>What’s new</b></p><ul>' + u.v.notes.slice(0, 6).map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' : '') +
+      '<div class="row"><button type="button" class="btn sm primary" id="upd-go"' + (updBusy ? ' disabled' : '') + '>' + (updBusy ? 'Updating…' : 'Update now') + '</button>' + (note ? '<span class="small">' + note + '</span>' : '') + '</div>';
+    $('upd-go').onclick = runUpdate;
+  }
+  function getBytes(url) { return fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t download ' + url.split('/').pop() + ' from the template.'); return r.arrayBuffer(); }).then(function (b) { return new Uint8Array(b); }); }
+  function runUpdate() {
+    var u = updateInfo(); if (!u || updBusy) return;
+    if (needToken()) return;
+    var cfg = syncCfg(), v = u.v, appText = '', done = 0, nextLauncher = '';
+    updBusy = true; renderUpdate('Downloading the new version…');
+    var step = function (msg) { renderUpdate(esc(msg)); };
+    var put = function (name, b64content, message) {
+      return shaOf(name, cfg.token).then(function (sha) {
+        var body = { message: message, content: b64content, branch: BRANCH }; if (sha) body.sha = sha;
+        return gh('/repos/' + REPO + '/contents/' + encodeURIComponent(name), { method: 'PUT', token: cfg.token, body: body });
+      }).then(function (r) { if (r.status !== 200 && r.status !== 201) throw new Error(writeErr(r)); return r; });
+    };
+    var chain = fetch(UPSTREAM + v.appFile, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('Couldn’t download the new app from the template.'); return r.text(); }).then(function (t) {
+      if (!DECK_RE.test(t) || t.indexOf("var VERSION = '" + v.app + "'") < 0) throw new Error('The template’s app file looks wrong; nothing was changed.');
+      appText = t;
+    });
+    u.decks.forEach(function (x) {   /* one at a time: each save is its own commit */
+      chain = chain.then(function () {
+        step('Updating ' + x.name + ' (' + (++done) + ' of ' + u.decks.length + ')…');
+        return fetch(encodeURI(x.name), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
+          var d = t && deckOf(t); if (!d) return;   /* unreadable deck: leave it alone */
+          var html = buildHtml(appText, d);
+          return put(x.name, b64(html), 'Update ' + x.name + ' to UnChalked v' + v.app).then(function (r) {
+            var c = load(); if (c && c.decks[x.name]) { c.decks[x.name] = { sha: r.json && r.json.content ? r.json.content.sha : '', info: parse(x.name, html) }; save(c); }
+          });
+        });
+      });
+    });
+    if (u.launcher) {
+      (Array.isArray(v.files) ? v.files : []).filter(function (f) { return /^[\w.-]+$/.test(f) && f !== 'index.html' && f !== 'version.json'; }).forEach(function (f) {
+        chain = chain.then(function () {
+          step('Updating ' + f + '…');
+          return Promise.all([getBytes(UPSTREAM + f), fetch(f, { cache: 'no-store' }).then(function (r) { return r.ok ? r.arrayBuffer() : null; }, function () { return null; })]).then(function (got) {
+            var up = b64bytes(got[0]), mine = got[1] ? b64bytes(new Uint8Array(got[1])) : '';
+            if (up !== mine) return put(f, up, 'Update ' + f + ' from the UnChalked template');
+          });
+        });
+      });
+      chain = chain.then(function () {   /* the launcher itself goes last */
+        step('Updating this launcher…');
+        return getBytes(UPSTREAM + 'index.html').then(function (bytes) {
+          nextLauncher = new TextDecoder().decode(bytes);
+          if (nextLauncher.indexOf('studytool-launcher') < 0) throw new Error('The template’s launcher looks wrong; the rest was updated.');
+          return put('index.html', b64bytes(bytes), 'Update the launcher to ' + v.launcher + ' from the UnChalked template');
+        });
+      });
+    }
+    chain.then(function () {
+      updBusy = false;
+      try { var st = updState(); st.applied = v.launcher + '/' + v.app; localStorage.setItem(UPD, JSON.stringify(st)); } catch (e) {}
+      render(load());
+      if (nextLauncher) {
+        renderUpdate('Updated. This page reloads with the new launcher in about a minute.');
+        var want = hash(nextLauncher), tries = 0;
+        (function poll() { setTimeout(function () { fetch('index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (t) { if (hash(t) === want) location.reload(); else if (++tries < 24) poll(); }, function () { if (++tries < 24) poll(); }); }, 10000); })();
+      } else { $('updbar').hidden = true; $('status').textContent = 'Updated to UnChalked v' + v.app + '. Decks go live in about a minute.'; }
+    }).catch(function (e) { updBusy = false; renderUpdate('<span style="color:var(--bad)">' + esc(e.message) + '</span>'); });
+  }
+
   /* ---------- wiring ---------- */
   document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('[data-close]'); if (t) { var d = t.closest('dialog'); if (d) d.close(); } });
   $('sync-btn').addEventListener('click', function () { openToken(false); });
   $('add-deck').addEventListener('click', function () { openAdd(); });
-  $('dlg-token').addEventListener('close', renderSync);
+  $('dlg-token').addEventListener('close', function () { renderSync(); renderChecklist(); });
   var cached = load();
   if (cached) render(cached, plural(cached.files.length, 'file') + ' · checked ' + ago(cached.at));
-  renderSync(); refreshBranch();
-  $('refresh').addEventListener('click', function () { refresh(true).then(function () { checkUpdates(true); }); });
+  renderSync(); refreshBranch(); renderChecklist(); renderUpdate();
+  $('ver-line').textContent = 'Launcher ' + LAUNCHER_VERSION;
+  $('refresh').addEventListener('click', function () { refresh(true).then(function () { checkUpdates(true); checkTemplate(true); }); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) { var c = load(); if (c) render(c); renderSync(); } });   /* back from a deck: refresh "Studied" times and sync status */
-  refresh(false).then(function () { checkUpdates(false); });
+  refresh(false).then(function () { checkUpdates(false); checkTemplate(false); });
 })();
 </script>
 </body>

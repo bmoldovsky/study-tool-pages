@@ -4667,12 +4667,18 @@ function announce(msg) { var a = $('#announce'); if (a) { a.textContent = ''; se
 function announcePolite(msg) { var a = $('#announce-polite'); if (a) { a.textContent = ''; setTimeout(function () { a.textContent = msg; }, 30); } }
 /* "‹ Decks" back to the launcher page (v4): the launcher saves its own address under studytool:launcher when it opens.
    Shown only when that page is on this same site and is not this page, so there is no network check and no dead link. */
-function launcherUrl() {
+function launcherUrl() {   /* several sites can share one origin (name.github.io/a, name.github.io/b): only a launcher in this deck's own folder counts */
   try {
-    var v = localStorage.getItem(LS + 'launcher'); if (!v) return '';
-    var u = new URL(v, location.href), here = location.href.split('#')[0];
-    if (!/^(https?|file):$/.test(u.protocol) || u.origin !== location.origin || u.href.split('#')[0] === here) return '';
-    return u.href;
+    var here = location.href.split('#')[0], folder = new URL('./', location.href).href, list = [];
+    try { list = JSON.parse(localStorage.getItem(LS + 'launchers')) || []; } catch (e) { list = []; }
+    if (!Array.isArray(list)) list = [];
+    var legacy = localStorage.getItem(LS + 'launcher'); if (legacy) list.push(legacy);
+    for (var i = 0; i < list.length; i++) {
+      var u = new URL(String(list[i]), location.href);
+      if (!/^(https?|file):$/.test(u.protocol) || u.origin !== location.origin || u.href.split('#')[0] === here) continue;
+      if (new URL('./', u.href).href === folder) return u.href;
+    }
+    return '';
   } catch (e) { return ''; }
 }
 function renderTop() {

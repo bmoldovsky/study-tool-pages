@@ -3537,6 +3537,7 @@ main{padding:20px 16px 64px;outline:none}
 .section-title h2{margin:0;flex:1}
 .star-btn{background:none;border:0;padding:6px;border-radius:8px;cursor:pointer;color:var(--muted);display:inline-flex;flex:none}
 .star-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.share-deck{margin-top:8px}
 .copy-ai{background:none;border:0;padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;gap:5px;flex:none;font:inherit;font-size:.82rem;font-weight:600}
 .copy-ai:hover{background:var(--surface-2);color:var(--text)}
 .copy-ai svg{width:17px;height:17px}
@@ -4603,6 +4604,13 @@ function aiText(id) {
   return L.join('\n');
 }
 function baseUrl() { return location.href.split('#')[0]; }
+/* "Share with friends" (v5): a friend pastes this link into their launcher's Add a deck → From a link and gets their own copy */
+function shareDeck() {
+  var url = location.href.split('#')[0].split('?')[0], title = plain(S.deck.meta.title);
+  var text = 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link.';
+  if (navigator.share) { navigator.share({ title: title, text: text, url: url }).catch(function () {}); return; }
+  copyText(text + '\n' + url, 'Share link');
+}
 function readFileText(file, cb) { var r = new FileReader(); r.onload = function () { cb(String(r.result || '')); }; r.onerror = function () { toast('Could not read that file.'); }; r.readAsText(file); }
 
 /* ---------- small render helpers ---------- */
@@ -4786,7 +4794,7 @@ VIEWS.dashboard = function () {
   var d = S.deck, all = allItems(), c = counts(all);
   var starredAll = all.filter(isStarred), starredN = starredAll.length, starredT = starredAll.filter(function (it) { return it.term != null; }).length, focusN = focusEntries().length, concept = masteryMode() === 'concept';
   var h = '<section class="card hero set-head"><div class="hero-head"><div style="min-width:0"><p class="eyebrow">' + esc(d.meta.course || 'Study deck') + '</p>' +
-    '<h1 id="view-title" tabindex="-1">' + fmt(d.meta.title) + '</h1><p class="muted small">' + plural(d.terms.length, 'term') + ' · ' + plural(d.questions.length, 'question') + (d.meta.updated ? ' · updated ' + esc(d.meta.updated) : '') + '</p></div>' +
+    '<h1 id="view-title" tabindex="-1">' + fmt(d.meta.title) + '</h1><p class="muted small">' + plural(d.terms.length, 'term') + ' · ' + plural(d.questions.length, 'question') + (d.meta.updated ? ' · updated ' + esc(d.meta.updated) : '') + '</p>' + (/^https?:$/.test(location.protocol) ? '<button type="button" class="btn sm ghost share-deck" data-action="share-deck" id="btn-share-deck">↗ Share with friends</button>' : '') + '</div>' +
     (d.meta.docUrl ? docLinkHtml(d.meta.docUrl, 'Study guide') : '') + '</div>';
   if (!all.length) {
     h += '<div class="empty"><p>This deck is empty.</p><div class="actions" style="justify-content:center"><button class="btn primary" data-action="nav" data-view="edit">Add terms and questions</button><button class="btn" data-action="goto-import">Import deck JSON</button></div></div></section>';
@@ -6401,6 +6409,7 @@ var A = {
   },
   'study-one': function (el) { var id = el.dataset.id, k = kindOf(id); startSession(k === 'term' ? 'cards' : 'learn', [{ id: id, kind: k }], { shuffle: false, label: 'single item' }); },
   'copy-link': function (el) { copyText(baseUrl() + '#' + el.dataset.frag, 'Link'); },
+  'share-deck': shareDeck,
   'copy-ai': function (el) { var x = aiText(el.dataset.id); if (x) copyText(x, (S.idx.q[el.dataset.id] ? 'Question' : 'Card') + ' and its context'); },
   'edit-item': function (el) { var id = el.dataset.id; if (S.idx.term[id]) openTermForm(id); else if (S.idx.q[id]) openQuestionForm(id); },
   'edit-tab': function (el) { S.editTab = el.dataset.tab; S.editSearch = ''; S.focus = '#tab-' + el.dataset.tab; render(); },

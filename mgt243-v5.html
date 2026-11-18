@@ -5985,7 +5985,7 @@ function exportJson() { download((slug(S.deck.meta.id) || 'deck') + '.json', JSO
    ===================================================================== */
 var SYNC_KEY = LS + 'sync', GH = 'https://api.github.com', GIST_DESC = 'Study Tool progress sync (managed by the app)', GIST_META = 'studytool-sync.json';
 var SYNC_DEBOUNCE = 5000, SYNC_RETRY = 60000;
-var PAT_URL = 'https://github.com/settings/personal-access-tokens/new?name=Study+Tool+sync&description=Progress+sync+for+Study+Tool&expires_in=180&gists=write';   /* GitHub's documented template URL for a fine-grained token */
+var PAT_URL = 'https://github.com/settings/personal-access-tokens/new?name=UnChalked+sync&description=Progress+sync+for+UnChalked&expires_in=180&gists=write';   /* GitHub's documented template URL for a fine-grained token */
 var SY = { cfg: null, run: null, queued: false, timer: null, retry: null, tick: null, status: '', remote: null, remoteDeck: '', snap: '', connecting: false, msg: '', helpOpen: false, sessT: null, sessAt: 0 };
 var SYNC_TIMING = { idle: 20000 };   /* "After every answer": sync after this long with no new answer, never more often */
 /* in-session syncs (pref syncSession): go through syncNow (one request chain at a time); they never re-render the session,

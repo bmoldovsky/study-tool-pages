@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="apple-mobile-web-app-title" content="Study">
+<meta name="apple-mobile-web-app-title" content="UnChalked">
 <meta name="studytool-launcher" content="1">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#131518" media="(prefers-color-scheme: dark)">
-<title>Study Decks</title>
+<title>UnChalked</title>
 <style>
 :root{
   --bg:#f5f4ef;--surface:#fff;--surface-2:#efeee8;--border:#e0ded5;--text:#1d2126;--muted:#5d646d;
@@ -33,7 +33,7 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow-wrap:break-word}
 .wrap{max-width:720px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 .top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-.logo{flex:none;width:40px;height:40px;border-radius:11px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:20px}
+.logo{flex:none;width:40px;height:40px;border-radius:10px;object-fit:cover;background:#111}
 .top .t{flex:1;min-width:0}
 h1{font-size:1.45rem;line-height:1.2;margin:0}
 .muted{color:var(--muted)}.small{font-size:.875rem}.tiny{font-size:.78rem}
@@ -65,9 +65,9 @@ footer a{color:var(--accent)}
 <body>
 <main class="wrap">
   <header class="top">
-    <div class="logo" aria-hidden="true">◆</div>
+    <img class="logo" src="icon-192.png" alt="" width="40" height="40">
     <div class="t">
-      <h1>Study decks</h1>
+      <h1>UnChalked</h1>
       <p id="status" class="muted small" role="status">Loading…</p>
     </div>
     <button type="button" class="btn" id="refresh">Refresh</button>

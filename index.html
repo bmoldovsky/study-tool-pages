@@ -44,6 +44,7 @@ h1{font-size:1.45rem;line-height:1.2;margin:0}
 .btn.sm{font-size:.82rem;padding:5px 10px}
 .btn:disabled{opacity:.6;cursor:default}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
 .syncbar{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding:8px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);font-size:.86rem}
 .syncbar .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--muted)}
 .syncbar.on .dot{background:var(--ok)}
@@ -121,6 +122,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     <div class="t">
       <h1>UnChalked</h1>
       <p id="status" class="muted small" role="status">Loading…</p>
+      <button type="button" class="linkbtn tiny" id="newhere-btn" hidden>New here? Get your own UnChalked</button>
     </div>
     <button type="button" class="btn" id="refresh">Refresh</button>
   </header>
@@ -132,7 +134,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   <button type="button" class="add" id="add-deck"><span class="plus" aria-hidden="true">+</span><span>Add a deck<small>Paste the deck JSON an AI made, or choose a saved .html file. It goes live here in about a minute.</small></span></button>
   <footer class="tiny muted">
     <p>Any HTML file in the repo shows up here (files starting with “_” are hidden). <a id="repo-link" href="#">Open the repo on GitHub</a></p>
-    <p>Ideas or problems? <a id="feedback-link" href="#">✉ Send feedback</a> · <span id="ver-line"></span></p>
+    <p>Ideas or problems? <a id="feedback-link" href="#">✉ Send feedback</a> · <button type="button" class="linkbtn" id="newhere-foot">Get your own UnChalked</button> · <span id="ver-line"></span></p>
   </footer>
 </main>
 
@@ -140,6 +142,12 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   <div class="dlg-head"><h2 id="tok-h">GitHub token</h2><button type="button" class="x" data-close aria-label="Close">✕</button></div>
   <div class="dlg-body" id="tok-body"></div>
   <div class="dlg-foot" id="tok-foot"></div>
+</div></dialog>
+
+<dialog id="dlg-new" aria-labelledby="new-h"><div class="dlg">
+  <div class="dlg-head"><h2 id="new-h">Get your own UnChalked</h2><button type="button" class="x" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body" id="new-body"></div>
+  <div class="dlg-foot"><button type="button" class="btn" data-close>Close</button><a class="btn primary" id="new-tpl" target="_blank" rel="noopener" href="#">Use this template</a></div>
 </div></dialog>
 
 <dialog id="dlg-add" aria-labelledby="add-h"><div class="dlg">
@@ -167,7 +175,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     return DEFAULT_REPO;
   }
   var REPO = repoName(), BRANCH = 'main';
-  var LAUNCHER_VERSION = '1.0';
+  var LAUNCHER_VERSION = '1.1';
   var UPSTREAM = (function () { var q = new URLSearchParams(location.search).get('upstream'); return q && LOCAL_OK.test(q) ? q : 'https://bmoldovsky.github.io/unchalked/'; })();   /* the UnChalked template this site follows for updates */
   var IS_UPSTREAM = REPO.toLowerCase() === 'bmoldovsky/unchalked' || new URL('./', location.href).href === UPSTREAM;
   $('repo-link').href = 'https://github.com/' + REPO;
@@ -260,7 +268,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   }
 
   /* ---------- share ---------- */
-  function shareText(title) { return 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link.'; }
+  function shareText(title) { return 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link. New to UnChalked? It’s free: github.com/' + 'bmoldovsky/unchalked'; }
   function copy(text) {
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
     var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
@@ -321,11 +329,11 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
         var rm = el('button', 'btn sm danger', 'Remove from site'); rm.type = 'button'; rm.onclick = function () { removeDeck(r.f.name, i.title); };
         mrow.appendChild(rn); mrow.appendChild(rm);
         more.onclick = function () { mrow.hidden = !mrow.hidden; more.setAttribute('aria-expanded', String(!mrow.hidden)); };
-        acts.appendChild(more); li.appendChild(acts); li.appendChild(mrow);
+        if (IS_UPSTREAM) { li.appendChild(acts); } else { acts.appendChild(more); li.appendChild(acts); li.appendChild(mrow); }   /* the demo site: no rename/remove for visitors */
       }
       list.appendChild(li);
     });
-    renderChecklist(); if (!updBusy) renderUpdate();
+    renderChecklist(); renderNewHere(); if (!updBusy) renderUpdate();
     var empty = $('empty');
     empty.hidden = rows.length > 0;
     if (!rows.length) empty.textContent = c ? 'No study files in the repo yet. Tap Add a deck below.' : 'Couldn’t load the list yet. Check your connection and tap Refresh.';
@@ -787,6 +795,30 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     }).catch(function (e) { $('status').textContent = e.message; });
   }
 
+  /* ---------- "New here? Get your own UnChalked" ---------- */
+  var TEMPLATE_REPO = 'bmoldovsky/unchalked', TEMPLATE_URL = 'https://github.com/' + TEMPLATE_REPO;
+  var AI_LINE = 'Set me up with UnChalked: ' + TEMPLATE_URL;
+  function openNew() {
+    $('new-body').innerHTML = '<p>UnChalked is free. Your own site keeps your decks, syncs your progress across devices and installs on your phone. It takes about 10 minutes and a free GitHub account.</p>' +
+      '<p style="margin-top:12px"><b>Easiest: let your AI walk you through it.</b> Paste this into ChatGPT, Claude, Gemini or any AI chat:</p>' +
+      '<div class="summary" style="display:flex;gap:8px;align-items:center"><code style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(AI_LINE) + '</code><button type="button" class="btn sm" id="new-copy">Copy</button></div>' +
+      '<p style="margin-top:14px"><b>Or by hand:</b></p><ol class="small">' +
+      '<li>Sign in at <a href="https://github.com" target="_blank" rel="noopener">github.com</a>, or create a free account.</li>' +
+      '<li>Tap <b>Use this template</b> below, name your copy (for example <code>unchalked</code>), keep it <b>Public</b>, and tap <b>Create repository</b>.</li>' +
+      '<li>In your new repository open <b>Settings → Pages</b>: Source <b>Deploy from a branch</b>, branch <b>main</b>, <b>/ (root)</b>, then <b>Save</b>.</li>' +
+      '<li>About a minute later, open <code>https://YOUR-NAME.github.io/REPOSITORY-NAME/</code> and follow its <b>Get started</b> checklist.</li></ol>' +
+      '<p class="tiny muted">Just want one offline file, no account? See <a href="' + TEMPLATE_URL + '#offline-version-no-github-account" target="_blank" rel="noopener">the offline version</a>.</p><div id="new-msg"></div>';
+    $('new-tpl').href = TEMPLATE_URL + '/generate';
+    $('new-copy').onclick = function () { copy(AI_LINE).then(function (ok) { msg('new-msg', ok ? 'ok' : 'bad', ok ? 'Copied. Paste it into your AI chat.' : 'Couldn’t copy. Select the line above instead.'); }); };
+    var d = $('dlg-new'); if (!d.open) d.showModal();
+  }
+  $('newhere-btn').addEventListener('click', openNew); $('newhere-foot').addEventListener('click', openNew);
+  /* the top link only for someone who looks new in this browser: no token and nothing studied here yet (the demo site has its own welcome card) */
+  function renderNewHere() {
+    var studied = siteDecks().some(function (x) { return progressOf(x.info.id).answers > 0; });
+    $('newhere-btn').hidden = IS_UPSTREAM || !!syncCfg() || studied;
+  }
+
   /* ---------- first-run checklist ---------- */
   var CL = 'launcher:checklist:' + REPO, PROMPT = '';
   function isIOS() { return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1); }
@@ -810,6 +842,12 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   }
   function renderChecklist() {
     var box = $('checklist'), hidden = false;
+    if (IS_UPSTREAM) {   /* the template's own demo site: visitors can't use its token or Add a deck, so welcome them instead */
+      box.hidden = false;
+      box.innerHTML = '<h2 id="cl-h">Welcome to the UnChalked demo</h2><p class="small" style="margin:0 0 10px">Try the demo deck below. To make decks from your own class materials, get your own free UnChalked site: about 10 minutes with a free GitHub account, or let your AI walk you through it.</p>' +
+        '<div class="row"><button type="button" class="btn sm primary" data-cl="new">Get your own UnChalked</button><a class="btn sm" href="' + TEMPLATE_URL + '" target="_blank" rel="noopener">About UnChalked</a></div>';
+      return;
+    }
     try { hidden = localStorage.getItem(CL) === 'hidden'; } catch (e) {}
     var token = !!syncCfg(), deck = siteDecks().some(function (x) { return x.info.id && x.info.id !== 'demo-deck'; }), home = isStandalone();
     var steps = [
@@ -829,7 +867,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   $('checklist').addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-cl]'); if (!b) return;
     var k = b.getAttribute('data-cl');
-    if (k === 'token') openToken(false); else if (k === 'prompt') copyPrompt(); else if (k === 'add') openAdd();
+    if (k === 'token') openToken(false); else if (k === 'prompt') copyPrompt(); else if (k === 'add') openAdd(); else if (k === 'new') openNew();
     else if (k === 'hide') { try { localStorage.setItem(CL, 'hidden'); } catch (er) {} renderChecklist(); }
   });
 
@@ -929,10 +967,11 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('[data-close]'); if (t) { var d = t.closest('dialog'); if (d) d.close(); } });
   $('sync-btn').addEventListener('click', function () { openToken(false); });
   $('add-deck').addEventListener('click', function () { openAdd(); });
-  $('dlg-token').addEventListener('close', function () { renderSync(); renderChecklist(); });
+  $('dlg-token').addEventListener('close', function () { renderSync(); renderChecklist(); renderNewHere(); });
   var cached = load();
   if (cached) render(cached, plural(cached.files.length, 'file') + ' · checked ' + ago(cached.at));
-  renderSync(); refreshBranch(); renderChecklist(); renderUpdate();
+  if (IS_UPSTREAM) { $('add-deck').hidden = true; $('syncbar').hidden = true; }   /* the template's demo site: visitors can't add decks or sync there */
+  renderSync(); refreshBranch(); renderChecklist(); renderNewHere(); renderUpdate();
   $('ver-line').textContent = 'Launcher ' + LAUNCHER_VERSION;
   $('refresh').addEventListener('click', function () { refresh(true).then(function () { checkUpdates(true); checkTemplate(true); }); });
   window.addEventListener('pageshow', function (e) { if (e.persisted) { var c = load(); if (c) render(c); renderSync(); } });   /* back from a deck: refresh "Studied" times and sync status */

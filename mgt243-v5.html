@@ -4614,7 +4614,7 @@ function feedbackHref() {
 /* "Share with friends" (v5): a friend pastes this link into their launcher's Add a deck → From a link and gets their own copy */
 function shareDeck() {
   var url = location.href.split('#')[0].split('?')[0], title = plain(S.deck.meta.title);
-  var text = 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link. New to UnChalked? It’s free: github.com/bmoldovsky/unchalked';
+  var text = 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link. New to UnChalked? It’s free: github.com/unchalked/unchalked';
   if (navigator.share) { navigator.share({ title: title, text: text, url: url }).catch(function () {}); return; }
   copyText(text + '\n' + url, 'Share link');
 }

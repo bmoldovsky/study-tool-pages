@@ -159,7 +159,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
 <script>
 (function () {
   'use strict';
-  var CACHE = 'launcher:v1', SYNC = 'studytool:sync', DEFAULT_REPO = 'bmoldovsky/unchalked', GH = 'https://api.github.com';
+  var CACHE = 'launcher:v1', SYNC = 'studytool:sync', DEFAULT_REPO = 'unchalked/unchalked', GH = 'https://api.github.com';
   var GIST_DESC = 'Study Tool progress sync (managed by the app)', GIST_META = 'studytool-sync.json';   /* same names the app uses, so every version finds the same Gist */
   var $ = function (id) { return document.getElementById(id); };
   var LOCAL_OK = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i;   /* plain-http links allowed only for local testing */
@@ -176,8 +176,8 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   }
   var REPO = repoName(), BRANCH = 'main';
   var LAUNCHER_VERSION = '1.1';
-  var UPSTREAM = (function () { var q = new URLSearchParams(location.search).get('upstream'); return q && LOCAL_OK.test(q) ? q : 'https://bmoldovsky.github.io/unchalked/'; })();   /* the UnChalked template this site follows for updates */
-  var IS_UPSTREAM = REPO.toLowerCase() === 'bmoldovsky/unchalked' || new URL('./', location.href).href === UPSTREAM;
+  var UPSTREAM = (function () { var q = new URLSearchParams(location.search).get('upstream'); return q && LOCAL_OK.test(q) ? q : 'https://unchalked.github.io/unchalked/'; })();   /* the UnChalked template this site follows for updates */
+  var IS_UPSTREAM = REPO.toLowerCase() === 'unchalked/unchalked' || new URL('./', location.href).href === UPSTREAM;
   $('repo-link').href = 'https://github.com/' + REPO;
   /* feedback address assembled at run time so it never sits in the file as plain text for scrapers */
   $('feedback-link').href = 'mailto:' + ['UnChalked.help', 'gmail.com'].join('@') + '?subject=' + encodeURIComponent('UnChalked suggestion') + '&body=' + encodeURIComponent('\n\n\n(For context, please keep this:)\nFrom: the UnChalked launcher');
@@ -268,7 +268,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   }
 
   /* ---------- share ---------- */
-  function shareText(title) { return 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link. New to UnChalked? It’s free: github.com/' + 'bmoldovsky/unchalked'; }
+  function shareText(title) { return 'Here’s my UnChalked deck “' + title + '”. To add it: open your UnChalked launcher → Add a deck → From a link, and paste this link. New to UnChalked? It’s free: github.com/' + 'unchalked/unchalked'; }
   function copy(text) {
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
     var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
@@ -796,7 +796,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
   }
 
   /* ---------- "New here? Get your own UnChalked" ---------- */
-  var TEMPLATE_REPO = 'bmoldovsky/unchalked', TEMPLATE_URL = 'https://github.com/' + TEMPLATE_REPO;
+  var TEMPLATE_REPO = 'unchalked/unchalked', TEMPLATE_URL = 'https://github.com/' + TEMPLATE_REPO;
   var AI_LINE = 'Set me up with UnChalked: ' + TEMPLATE_URL;
   function openNew() {
     $('new-body').innerHTML = '<p>UnChalked is free. Your own site keeps your decks, syncs your progress across devices and installs on your phone. It takes about 10 minutes and a free GitHub account.</p>' +

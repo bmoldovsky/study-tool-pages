@@ -175,7 +175,7 @@ textarea{min-height:150px;font-family:ui-monospace,SFMono-Regular,Consolas,monos
     return DEFAULT_REPO;
   }
   var REPO = repoName(), BRANCH = 'main';
-  var LAUNCHER_VERSION = '1.1';
+  var LAUNCHER_VERSION = '1.2';
   var UPSTREAM = (function () { var q = new URLSearchParams(location.search).get('upstream'); return q && LOCAL_OK.test(q) ? q : 'https://unchalked.github.io/unchalked/'; })();   /* the UnChalked template this site follows for updates */
   var IS_UPSTREAM = REPO.toLowerCase() === 'unchalked/unchalked' || new URL('./', location.href).href === UPSTREAM;
   $('repo-link').href = 'https://github.com/' + REPO;

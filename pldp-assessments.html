@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLDP Assessments</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, workmanlike self-assessment workbook
+   IDEA: a scored answer sheet, each questionnaire a page with its tally box
+   PICTURE: the live score panel per assessment, yellow slab behind the key figure
+   COLOUR and TYPE: white, ink #101418, warm yellow #ffd84a, slate; Manrope
+   LAYOUT: tab row, items column, sticky score panel to the right on wide screens */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#101418);--ink:light-dark(#101418,#e8eaee);--mute:light-dark(#5b6470,#9aa3ae);--line:light-dark(#e3e6ea,#2a3038);--card:light-dark(#f6f7f9,#171c22);--y:#ffd84a;--yk:#101418;--sel:light-dark(#101418,#ffd84a);--selk:light-dark(#fff,#101418)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Manrope,system-ui,sans-serif;overflow-x:clip}
+header{padding:28px max(5vw,16px) 8px;max-width:1240px;margin:auto}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0 0 6px;font-weight:800;text-wrap:balance}
+h2{font-size:24px;margin:0 0 4px;line-height:1.15}
+.sub{color:var(--mute);margin:0;max-width:70ch}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.scroll{display:flex;gap:6px;overflow-x:auto;padding:10px max(5vw,16px);max-width:1240px;margin:auto}
+.scroll a{flex:none;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:500;white-space:nowrap}
+.scroll a.on{background:var(--sel);color:var(--selk);border-color:var(--sel)}
+.scroll a small{opacity:.7;margin-left:6px}
+main{max-width:1240px;margin:auto;padding:20px max(5vw,16px) 60px}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}.panel{position:static!important;order:-1}}
+.panel{position:sticky;top:70px;background:var(--card);border-radius:14px;padding:18px}
+.panel h3{margin:0 0 10px;font-size:16px}
+.sc{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.sc:first-of-type{border-top:0}
+.sc b{font-size:20px;white-space:nowrap}
+.sc .key{background:var(--y);color:var(--yk);padding:0 8px;border-radius:6px}
+.lvl{display:block;color:var(--mute);font-size:13px}
+.note{font-size:13px;color:var(--mute);margin:10px 0 0}
+.item{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.item .n{color:var(--mute);font-weight:700;font-size:14px}
+.opts{display:flex;gap:4px;flex-wrap:wrap}
+.opts button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 15px Manrope,sans-serif;cursor:pointer}
+.opts button.on{background:var(--sel);color:var(--selk);border-color:var(--sel)}
+.opts button:focus-visible,.scroll a:focus-visible,.btn:focus-visible,select:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+@media(max-width:600px){.item{grid-template-columns:2em minmax(0,1fr)}.opts{grid-column:1/-1}}
+.key-line{font-size:13px;color:var(--mute);margin:6px 0 14px}
+.grp{margin:22px 0 4px;font-weight:700;font-size:15px}
+.wide .opts button{width:auto;padding:0 14px}
+.sit{padding:14px 0;border-bottom:1px solid var(--line)}
+.sit p{margin:0 0 8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center}
+th:first-child,td:first-child{text-align:left}
+select{font:16px Manrope,sans-serif;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-height:40px}
+.btn{font:700 15px Manrope,sans-serif;background:var(--sel);color:var(--selk);border:0;border-radius:10px;padding:12px 18px;cursor:pointer;min-height:44px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+pre{background:var(--card);padding:16px;border-radius:12px;white-space:pre-wrap;font-size:13px;line-height:1.5;overflow-x:auto}
+.toast{font-size:13px;color:var(--mute);align-self:center}
+.lead{max-width:70ch}
+</style></head><body>
+<header><h1>PLDP leadership assessments</h1><p class="sub">Answer each questionnaire honestly; scores update as you go. When done, open <b>Results</b> and copy the summary back into the chat. Answers stay saved in this browser. Trait and Servant use ratings from friends: each tab has a link to text them.</p></header>
+<nav><div class="scroll" id="tabs"></div></nav>
+<main id="view"></main>
+<script>
+{
+const L5=['Strongly disagree','Disagree','Neutral','Agree','Strongly agree'];
+const A=[
+{id:'trait',t:'Trait Approach',ch:2,kind:'trait',scale:5,labels:L5,who:'Self-rating. How much do you agree each trait describes you as a leader?',items:['Articulate: Communicates effectively with others','Perceptive: Is discerning and insightful','Self-confident: Believes in oneself and one\'s ability','Self-assured: Is secure with oneself, free of doubts','Persistent: Stays fixed on the goals, despite interference','Determined: Takes a firm stand, acts with certainty','Trustworthy: Is authentic and inspires confidence','Dependable: Is consistent and reliable','Friendly: Shows kindness and warmth','Outgoing: Talks freely, gets along well with others','Conscientious: Is thorough, organized, and controlled','Diligent: Is persistent, hardworking','Sensitive: Shows tolerance, is tactful and sympathetic','Empathic: Understands others, identifies with others']},
+{id:'beh',t:'Behavioral Approach',ch:4,scale:5,labels:['Never','Seldom','Occasionally','Often','Always'],who:'Self-assessment. How often do you engage in each behavior?',
+ items:['Tells group members what they are supposed to do.','Acts friendly with members of the group.','Sets standards of performance for group members.','Helps others in the group feel comfortable.','Makes suggestions about how to solve problems.','Responds favorably to suggestions made by others.','Makes their perspective clear to others.','Treats others fairly.','Develops a plan of action for the group.','Behaves in a predictable manner toward group members.','Defines role responsibilities for each group member.','Communicates actively with group members.','Clarifies their own role within the group.','Shows concern for the well-being of others.','Provides a plan for how the work is to be done.','Shows flexibility in making decisions.','Provides criteria for what is expected of the group.','Discloses thoughts and feelings to group members.','Encourages group members to do high-quality work.','Helps group members get along with each other.'],
+ groups:[['Task',[1,3,5,7,9,11,13,15,17,19]],['Relationship',[2,4,6,8,10,12,14,16,18,20]]],
+ lv:s=>s>=40?'High range (40-50)':s>=30?'Moderate range (30-39)':'Low range (10-29)'},
+{id:'tf',t:'Transformational',ch:8,scale:5,labels:L5,who:'Self-assessment. Think of a time you led a group.',
+ items:['I have a clear understanding of where my group is going.','I always give others positive feedback when they perform well.','I paint an interesting picture of the future for our group.','I give special recognition to group members when their work is very good.','I am always seeking new opportunities for the group.','I commend others when they do a better than average job.','I inspire others with my plans for the future.','I frequently acknowledge others\' good performance.'],
+ groups:[['Transformational',[1,3,5,7]],['Transactional',[2,4,6,8]]],
+ lv:s=>s>12?'Higher preference (13-20)':'Lower preference (4-12)'},
+{id:'srv',t:'Servant Leadership',ch:10,kind:'srv',scale:7,labels:['Strongly disagree','Disagree','Disagree somewhat','Undecided','Agree somewhat','Agree','Strongly agree'],who:'Others-assessment only.',rater:true,
+ items:['Others would seek help from the leader if they had a personal problem.','The leader emphasizes the importance of giving back to the community.','The leader can tell if something work-related is going wrong.','The leader gives others the responsibility to make important decisions about their own jobs.','The leader makes others\' career development a priority.','The leader cares more about others\' success than their own.','The leader holds high ethical standards.','The leader cares about others\' personal well-being.','The leader is always interested in helping people in the community.','The leader is able to think through complex problems.','The leader encourages others to handle important work decisions on their own.','The leader is interested in making sure others reach their career goals.','The leader puts others\' best interests above their own.','The leader is always honest.','The leader takes time to talk to others on a personal level.','The leader is involved in community activities.','The leader has a thorough understanding of the organization and its goals.','The leader gives others the freedom to handle difficult situations in the way they feel is best.','The leader provides others with work experiences that enable them to develop new skills.','The leader sacrifices their own interests to meet others\' needs.','The leader would not compromise ethical principles in order to meet success.','The leader can recognize when others are feeling down without asking them.','The leader encourages others to volunteer in the community.','The leader can solve work problems with new or creative ideas.','If others need to make important decisions at work, they do not need to consult the leader.','The leader wants to know about others\' career goals.','The leader does what they can to make others\' jobs easier.','The leader values honesty more than profits.'],
+ groups:[['Emotional Healing',[1,8,15,22]],['Creating Value for the Community',[2,9,16,23]],['Conceptual Skills',[3,10,17,24]],['Empowering',[4,11,18,25]],['Helping Followers Grow and Succeed',[5,12,19,26]],['Putting Followers First',[6,13,20,27]],['Behaving Ethically',[7,14,21,28]]],
+ lv:s=>s>=23?'High (23-28): others believe you strongly exhibit this':s>=14?'Moderate (14-22): exhibited in an average way':'Low (4-13): below the expected degree'},
+{id:'auth',t:'Authentic Leadership',ch:9,scale:5,labels:L5,who:'Self-assessment.',
+ items:['I can list my three greatest weaknesses.','My actions reflect my core values.','I seek others\' opinions before making up my own mind.','I openly share my feelings with others.','I can list my three greatest strengths.','I do not allow group pressure to control me.','I listen closely to the ideas of those who disagree with me.','I let others know who I truly am as a person.','I seek feedback as a way of understanding who I really am as a person.','Other people know where I stand on controversial issues.','I do not emphasize my own point of view at the expense of others.','I rarely present a "false" front to others.','I accept the feelings I have about myself.','My morals guide what I do as a leader.','I listen very carefully to the ideas of others before making decisions.','I admit my mistakes to others.'],
+ groups:[['Self-Awareness',[1,5,9,13]],['Internalized Moral Perspective',[2,6,10,14]],['Balanced Processing',[3,7,11,15]],['Relational Transparency',[4,8,12,16]]],
+ lv:s=>s>=16?'High (16-20)':'Low (15 and below)'},
+{id:'gen',t:'Gender & Leadership',ch:14,scale:5,labels:['Not important','Somewhat important','Neutral','Important','Very important'],who:'Self-assessment. How important is each characteristic for leadership?',
+ items:['Supporter','Leader','Ambitious','Determined','Helpful','Dynamic','Understanding','Compassionate','Assertive','Sympathetic','Warm','Kind','Controlling','Caring','Independent','Dominant'],
+ groups:[['Communal',[1,5,7,8,10,11,12,14]],['Agentic',[2,3,4,6,9,13,15,16]]],
+ lv:s=>s>=33?'Strong value (33-40)':s>=25?'Neutral association (25-32)':'Weak value (8-24)'},
+{id:'eth',t:'Leadership Ethics',ch:15,kind:'eth'},
+{id:'inc',t:'Inclusive Leadership',ch:12,kind:'inc'}
+];
+const ETH=['You lead a manufacturing team and learn your employees are falsifying product quality results to sell more products. If you report it, most of them will lose their jobs, you may lose yours, and the company\'s reputation will take a significant hit.',
+'An employee with performance problems is making it hard for your group to meet its quota. They were recommended to you as a solid performer, but you now believe their former manager just wanted to get rid of them. You could give them a good recommendation, leaving out the problems, and pass them off to another group.',
+'Your team is hard-pressed to complete a critical project. A job opening would be much better for one of your key employees\' career, but if they leave, the project is in danger.',
+'An employee whose child has a serious illness is having trouble fulfilling obligations at work. Your assistant tells you the employee claimed 40 hours on a time sheet for a week they actually worked 30.',
+'Some of your employees finish their quotas in much less than the allotted time. If upper management finds out, they will raise the quotas, and some employees are already unable to meet the current ones.',
+'You are the CFO. The CEO and senior leadership, who all hold significant stock, want to provide exaggerated financial information to keep the stock price high.',
+'Two new hires on your accounting team, right out of school, regularly surf the internet or text and refuse month-end overtime, shifting work to teammates who are growing resentful.',
+'You direct a neighborhood food co-op. A member, a single parent with four children, is caught shoplifting $30 in groceries, and you suspect this has gone on for years. You consider pressing charges.',
+'You have been accused of gender discrimination in hiring. You could hire a candidate of that gender over a slightly better qualified candidate of another gender, which would address the accusation and help your reputation.',
+'You are a professor. One of your best students bought an essay, then later feels guilty and confesses. The norm is to fail a student for plagiarism. Do you flunk the student?'];
+const EO=[['A','I would do what is right','Duty'],['B','I would do what benefits the most people','Utilitarian'],['C','I would do what a good person would do','Virtue'],['D','I would do what shows that I care about my relationships','Caring'],['E','I would do what benefits me the most','Egoism'],['F','I would do what is fair','Justice']];
+const EINT={Duty:'Follows rules and does what you are supposed to do; focus on fulfilling responsibilities.',Utilitarian:'Does what is best for the most people; greatest happiness for the largest number.',Virtue:'Acts from character, integrity, and faithfulness to your own principles of goodness.',Caring:'Gives attention to relationships and special consideration to those you share a bond with.',Egoism:'Does what is best for yourself; not afraid to assert your own interests and goals.',Justice:'Treats others fairly; benefits and burdens shared equitably.'};
+const INC=[['One-on-One',['I begin our interaction by showing interest in the other person (asking questions, sharing something personal, inviting them to share).','I make eye contact with the person.','I face the individual I am speaking with.','I put away all distractions such as my cell phone.','I eliminate physical or technological barriers between us (sitting behind a desk, camera off).','I ask open-ended questions to learn about the other person.','I regularly designate time for people to come and talk to me.','I treat each and every person with respect and dignity.','I recognize and reward people according to their individual motivations.']],
+['Teams (as leader)',['I identify unique skill sets of team members.','I use the full range of talents on my team to achieve work objectives.','I ask everyone on the team for input through different means (in person, email, pulse checks).','I ask everyone on the team what and how they want to contribute.','I configure project teams to include people who do not regularly interact with one another.','I provide different members of the team with leadership opportunities.','I seek feedback from others and make changes based on that feedback.']],
+['Teams (as facilitator)',['I prepare an agenda and send it out ahead of a meeting so people can prepare.','I use a process in which everyone gives feedback and input (round-robin, nominal group technique, live polling).','When possible, I ask team members to provide updates rather than being the only one to speak.','I adapt physical arrangements such as seating or technology so people can interact.','When someone new joins or a team is forming, I ask for preferred names, pronunciations, and pronouns.','I encourage conflicting views and dissension within team discussions.','I create "airtime" limits so outspoken people do not dominate.']],
+['Teams (as participant)',['We rotate roles in team meetings (time keeper, note-taker, action item capturer).','If a colleague is interrupted, I say I would like to hear them finish, prompting the group to go back.','I come prepared to share my thoughts and ideas.','If a colleague has been silent, I encourage them to share ("I would love to hear what you think").']],
+['Mentor/Protégé',['I ask my protégé about preferred work style and communication cadence.','I discuss and develop a list of expectations with my protégé so we clarify expectations early.','Rather than assume I know best, I start meetings by asking how our time together can be most useful for the protégé.']]];
+const LINKS={trait:'https://bmoldovsky.github.io/study-tool-pages/pldp-trait.html',srv:'https://bmoldovsky.github.io/study-tool-pages/pldp-servant.html'};
+let S={};try{S=JSON.parse(localStorage.getItem('pldp')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('pldp',JSON.stringify(S))}catch(e){}};
+const g=id=>S[id]||(S[id]={});
+const sum=(id,idx)=>idx.reduce((a,i)=>a+(+g(id)[i]||0),0);
+const done=(id,idx)=>idx.every(i=>g(id)[i]);
+const rs=id=>g(id).raters||(g(id).raters=[]);
+const avg=(id,i)=>{const r=rs(id);return r.length?r.reduce((a,x)=>a+x.v[i-1],0)/r.length:null};
+function parse(txt,code,n){const out=[];const re=new RegExp(code+'\\|([^|\\n]*)\\|([\\d,\\s]+)','g');let m;while(m=re.exec(txt)){const v=m[2].split(',').map(x=>+x.trim()).filter(x=>!isNaN(x));if(v.length===n)out.push({name:m[1].trim()||'Rater',v})}
+ if(!out.length){const v=(txt.match(/\d/g)||[]).map(Number);if(v.length===n)out.push({name:'Rater',v})}return out.filter(o=>o.v.every(x=>x>=1&&x<=(code==='TRAIT'?5:7)))}
+function progress(a){const s=g(a.id);
+ if(a.kind==='trait'){let n=0;for(let i=1;i<=14;i++)if(s[i])n++;return n+'/14'+(rs('trait').length?' +'+rs('trait').length:'')}
+ if(a.kind==='srv'){return rs('srv').length+' raters'}
+ if(a.kind==='eth'){return Object.keys(s).length+'/10'}
+ if(a.kind==='inc'){return Object.keys(s).length+'/30'}
+ return Object.keys(s).length+'/'+a.items.length}
+function tabs(cur){document.getElementById('tabs').innerHTML=A.map(a=>`<a href="#${a.id}" class="${a.id===cur?'on':''}">${a.t}<small>${progress(a)}</small></a>`).join('')+`<a href="#results" class="${cur==='results'?'on':''}">Results</a>`}
+function opts(id,i,n,lbls){return `<div class="opts" role="radiogroup">${Array.from({length:n},(_,k)=>`<button data-a="${id}" data-i="${i}" data-v="${k+1}" title="${lbls?lbls[k]:''}" class="${+g(id)[i]===k+1?'on':''}" aria-pressed="${+g(id)[i]===k+1}">${k+1}</button>`).join('')}</div>`}
+function likert(a){return `<p class="key-line">${a.who}<br>Key: ${a.labels.map((l,k)=>`${k+1} = ${l}`).join(' · ')}</p>`+a.items.map((t,k)=>`<div class="item"><span class="n">${k+1}.</span><span>${t}</span>${opts(a.id,k+1,a.scale,a.labels)}</div>`).join('')}
+function scoresHTML(a){
+ if(a.kind==='trait'){const r=trait();return `<h3>Scores</h3>${r.ready?`<div class="sc"><span>Highest self</span><b class="key">${r.hi.map(x=>x.n).join(', ')}</b></div><div class="sc"><span>Lowest self</span><b>${r.lo.map(x=>x.n).join(', ')}</b></div>`:'<p class="note">Fill in your self-ratings to see highs and lows.</p>'}${r.raters?`<div class="sc"><span>Biggest gaps</span><b>${r.dhi.map(x=>x.n).join(', ')}</b></div><div class="sc"><span>Smallest gaps</span><b>${r.dlo.map(x=>x.n).join(', ')}</b></div>`:'<p class="note">Enter at least one rater\'s scores for the discrepancy results. The assignment expects five raters.</p>'}`}
+ if(a.kind==='srv'){const r=rs('srv');if(!r.length)return '<h3>Scores</h3><p class="note">No rater results yet. Send the link, then paste what comes back.</p>';return `<h3>Scores${r.length>1?' (avg of '+r.length+' raters)':''}</h3>`+a.groups.map(([n,idx])=>{const s=srvSum(idx);return `<div class="sc"><span>${n}<span class="lvl">${a.lv(s)}</span></span><b class="key">${fmt(s)}</b></div>`}).join('')}
+ if(a.kind==='eth'){const c=eth();const top=Math.max(...Object.values(c));return `<h3>Scores</h3>`+EO.map(o=>`<div class="sc"><span>${o[2]} Ethics</span><b class="${c[o[2]]===top&&top>0?'key':''}">${c[o[2]]}</b></div>`).join('')+`<p class="note">Highest = primary ethical style. ${Object.keys(g('eth')).length}/10 answered.</p>`}
+ if(a.kind==='inc'){const r=inc();return `<h3>"No" counts</h3><div class="sc"><span>Total inclusive leadership<span class="lvl">${incLv(r.total)}</span></span><b class="key">${r.total}</b></div>`+r.groups.map(x=>`<div class="sc"><span>${x.n}</span><b>${x.no} / ${x.of}</b></div>`).join('')+`<p class="note">Lower is better. ${r.ans}/30 answered.</p>`}
+ return `<h3>Scores</h3>`+a.groups.map(([n,idx],k)=>{const s=sum(a.id,idx),d=done(a.id,idx);return `<div class="sc"><span>${n}<span class="lvl">${d?a.lv(s):idx.filter(i=>g(a.id)[i]).length+'/'+idx.length+' answered'}</span></span><b class="${k===0||a.groups.length>2?'':''}${d?' key':''}">${d?s:'-'}</b></div>`}).join('')}
+const srvSum=idx=>{const r=rs('srv');return r.reduce((a,x)=>a+idx.reduce((b,i)=>b+x.v[i-1],0),0)/r.length};
+const fmt=x=>Number.isInteger(x)?String(x):x.toFixed(1);
+function raterBlock(id){const r=rs(id),code=id==='trait'?'TRAIT':'SERVANT';return `<div class="grp">Raters</div><p class="key-line">Copy the link message and text it to friends. They answer on their phone and send back a result; paste one or several results below.</p><div class="row"><button class="btn ghost" data-copy="${id}">Copy link message</button><a class="btn ghost" href="${LINKS[id]}" target="_blank" rel="noopener" style="text-decoration:none">Open rater form</a></div><p class="key-line" style="word-break:break-all">${LINKS[id]}</p><textarea id="paste-${id}" placeholder="Paste rater results here (lines starting ${code}|...)" style="width:100%;height:90px;font:14px ui-monospace,monospace;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)"></textarea><div class="row"><button class="btn" data-add="${id}">Add results</button><span class="toast" id="t-${id}"></span></div>${r.length?`<table><thead><tr><th>Rater</th><th>Answers</th><th></th></tr></thead><tbody>${r.map((x,k)=>`<tr><td>${x.name.replace(/</g,'')}</td><td style="font-size:12px">${x.v.join(' ')}</td><td><button class="btn ghost" style="padding:6px 10px;min-height:36px" data-del="${id}" data-k="${k}">Remove</button></td></tr>`).join('')}</tbody></table>`:''}`}
+function trait(){const s=g('trait');const rows=[];let raters=false;
+ for(let i=1;i<=14;i++){const self=+s[i]||null,av=avg('trait',i);if(av!==null)raters=true;rows.push({i,n:A[0].items[i-1].split(':')[0],self,av,d:self&&av!==null?Math.abs(self-av):null})}
+ const ready=rows.every(r=>r.self);const bySelf=[...rows].filter(r=>r.self).sort((a,b)=>b.self-a.self||a.i-b.i);
+ const withD=rows.filter(r=>r.d!==null).sort((a,b)=>b.d-a.d||a.i-b.i);
+ return {rows,ready,raters,hi:bySelf.slice(0,3),lo:bySelf.slice(-3).reverse(),dhi:withD.slice(0,3),dlo:withD.slice(-3).reverse()}}
+function eth(){const c={};EO.forEach(o=>c[o[2]]=0);Object.values(g('eth')).forEach(v=>{const o=EO.find(o=>o[0]===v);if(o)c[o[2]]++});return c}
+function inc(){const s=g('inc');let n=0,total=0,ans=0;const groups=INC.map(([name,items])=>{let no=0;items.forEach(()=>{n++;if(s[n]==='N'){no++;total++}if(s[n])ans++});return {n:name,no,of:items.length}});return {total,groups,ans}}
+function incLv(t){return t<=9?'0-9: you exemplify many inclusive leader behaviors':t<=19?'10-19: likely inclusive, with a somewhat limited set of tactics':'20-30: not yet aware of or motivated toward inclusive leadership'}
+function body(a){
+ if(a.kind==='trait'){const r=trait();return likert(a)+raterBlock('trait')+(r.raters?`<div class="grp">Self vs. raters</div><div class="scroll" style="padding:0"><table><thead><tr><th>Trait</th><th>Self</th><th>Rater avg</th><th>Gap</th></tr></thead><tbody>${r.rows.map(x=>`<tr><td>${x.i}. ${x.n}</td><td>${x.self||''}</td><td>${x.av!==null?x.av.toFixed(1):''}</td><td>${x.d!==null?x.d.toFixed(1):''}</td></tr>`).join('')}</tbody></table></div>`:'')}
+ if(a.kind==='srv')return `<p class="key-line">Others-assessment: friends, colleagues, or classmates rate you ("the leader" = you) on a 1-7 scale. With several raters, scores are averaged.</p>`+raterBlock('srv');
+ if(a.kind==='eth'){const s=g('eth');return `<p class="key-line">For each situation, pick the one response that best describes <b>why</b> you would do what you would do.</p>`+ETH.map((t,k)=>`<div class="sit"><p><b>${k+1}.</b> ${t}</p><div class="opts wide">${EO.map(o=>`<button data-e="${k+1}" data-v="${o[0]}" class="${s[k+1]===o[0]?'on':''}">${o[0]}. ${o[1].replace('I would do what ','')}</button>`).join('')}</div></div>`).join('')}
+ if(a.kind==='inc'){const s=g('inc');let n=0;return `<p class="key-line">Check Yes or No for each behavior you exhibit.</p>`+INC.map(([name,items])=>`<div class="grp">${name}</div>`+items.map(t=>{n++;return `<div class="item"><span class="n">${n}.</span><span>${t}</span><div class="opts wide"><button data-c="${n}" data-v="Y" class="${s[n]==='Y'?'on':''}">Yes</button><button data-c="${n}" data-v="N" class="${s[n]==='N'?'on':''}">No</button></div></div>`}).join('')).join('')}
+ return likert(a)}
+function results(){const L=[];
+ const r=trait();L.push('TRAIT APPROACH (LTQ)');L.push('  Raters ('+rs('trait').length+'): '+rs('trait').map(x=>x.name).join(', '));r.rows.forEach(x=>L.push(`  ${x.i}. ${x.n}: self ${x.self||'-'}, raters ${rs('trait').map(y=>y.v[x.i-1]).join('/')||'-'}, avg ${x.av!==null?x.av.toFixed(1):'-'}, gap ${x.d!==null?x.d.toFixed(1):'-'}`));
+ const f=a=>a.map(x=>`${x.n} (${x.self}${x.av!==null?', avg '+x.av.toFixed(1):''})`).join(', ');const fd=a=>a.map(x=>`${x.n} (gap ${x.d.toFixed(1)})`).join(', ');
+ L.push('  Highest self: '+f(r.hi),'  Lowest self: '+f(r.lo),'  Highest discrepancy: '+(r.raters?fd(r.dhi):'n/a'),'  Lowest discrepancy: '+(r.raters?fd(r.dlo):'n/a'),'');
+ {const a=A[3],r=rs('srv');L.push('SERVANT LEADERSHIP (others-assessment, '+r.length+' rater'+(r.length===1?'':'s')+(r.length?': '+r.map(x=>x.name).join(', '):'')+')');a.groups.forEach(([n,idx])=>L.push(`  ${n}: ${r.length?fmt(srvSum(idx))+' - '+a.lv(srvSum(idx))+(r.length>1?' (per rater: '+r.map(x=>idx.reduce((b,i)=>b+x.v[i-1],0)).join('/')+')':''):'no raters yet'}`));r.forEach(x=>L.push('  '+x.name+': '+x.v.join(' ')));L.push('')}
+ A.filter(a=>a.groups&&a.kind!=='srv').forEach(a=>{L.push(a.t.toUpperCase()+(a.rater?' (others-assessment)':''));a.groups.forEach(([n,idx])=>L.push(`  ${n}: ${done(a.id,idx)?sum(a.id,idx)+' - '+a.lv(sum(a.id,idx)):'incomplete'}`));L.push('  Items: '+a.items.map((_,k)=>g(a.id)[k+1]||'-').join(' '),'')});
+ const c=eth();L.push('LEADERSHIP ETHICS');EO.forEach(o=>L.push(`  ${o[2]} Ethics: ${c[o[2]]} - ${EINT[o[2]]}`));L.push('  Answers: '+Array.from({length:10},(_,k)=>g('eth')[k+1]||'-').join(' '),'');
+ const ic=inc();L.push('INCLUSIVE LEADERSHIP ("No" counts)','  Total: '+ic.total+' - '+incLv(ic.total));ic.groups.forEach(x=>L.push(`  ${x.n}: ${x.no} of ${x.of}`));L.push('  Answers: '+Array.from({length:30},(_,k)=>g('inc')[k+1]||'-').join(' '));
+ return L.join('\n')}
+function raterText(k){return (k==='trait'?'Quick favor for my leadership class: could you rate me on 14 leadership traits? Takes about 2 minutes on your phone. When you finish, tap Send and text the result back to me. ':'Quick favor for my leadership class: could you rate me on a short servant leadership survey? Takes about 4 minutes on your phone. When you finish, tap Send and text the result back to me. ')+LINKS[k]}
+async function copy(txt,el){try{await navigator.clipboard.writeText(txt);if(el)el.textContent='Copied.'}catch(e){if(el)el.textContent='Copy blocked: select the text and copy manually.'}}
+function render(){const id=(location.hash||'#trait').slice(1);const v=document.getElementById('view');tabs(id);
+ if(id==='results'){v.innerHTML=`<h2>Results summary</h2><p class="lead sub">Copy this and paste it into the chat. It includes every score, its interpretation, and your item answers so the numbers can be double-checked.</p><div class="row"><button class="btn" id="cp">Copy results</button><button class="btn ghost" id="clr">Clear all answers</button><span class="toast" id="t-r"></span></div><pre id="out">${results().replace(/</g,'&lt;')}</pre>`;
+  document.getElementById('cp').onclick=()=>copy(results(),document.getElementById('t-r'));
+  const c=document.getElementById('clr');c.onclick=()=>{if(c.dataset.sure){S={};save();render()}else{c.dataset.sure=1;c.textContent='Tap again to clear everything'}};return}
+ const a=A.find(x=>x.id===id)||A[0];
+ v.innerHTML=`<div class="wrap"><section><h2>${a.t}</h2><p class="sub">Chapter ${a.ch} questionnaire</p>${body(a)}</section><aside class="panel" id="panel">${scoresHTML(a)}</aside></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ const id=(location.hash||'#trait').slice(1);
+ if(b.dataset.a){g(b.dataset.a)[b.dataset.i]=+b.dataset.v}
+ else if(b.dataset.e){g('eth')[b.dataset.e]=b.dataset.v}
+ else if(b.dataset.c){g('inc')[b.dataset.c]=b.dataset.v}
+ else if(b.dataset.copy){copy(raterText(b.dataset.copy),document.getElementById('t-'+b.dataset.copy));return}
+ else if(b.dataset.add){const id=b.dataset.add,ta=document.getElementById('paste-'+id);const got=parse(ta.value,id==='trait'?'TRAIT':'SERVANT',id==='trait'?14:28);if(!got.length){document.getElementById('t-'+id).textContent='No valid result found. Paste the full line starting '+(id==='trait'?'TRAIT|':'SERVANT|');return}rs(id).push(...got)}
+ else if(b.dataset.del){rs(b.dataset.del).splice(+b.dataset.k,1)}
+ else return;
+ save();const y=window.scrollY;render();window.scrollTo(0,y)});
+addEventListener('hashchange',()=>{render();scrollTo(0,0)});
+render();
+}
+</script></body></html>

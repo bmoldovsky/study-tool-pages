@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rate Ben: Servant Leadership</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#fff,#101418);--ink:light-dark(#101418,#e8eaee);--mute:light-dark(#5b6470,#9aa3ae);--line:light-dark(#e3e6ea,#2a3038);--card:light-dark(#f6f7f9,#171c22);--y:#ffd84a;--sel:light-dark(#101418,#ffd84a);--selk:light-dark(#fff,#101418)}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif}
+.w{max-width:640px;margin:auto;padding:20px 16px 80px}
+h1{font-size:28px;line-height:1.1;margin:8px 0}
+p{margin:0 0 12px}.mute{color:var(--mute);font-size:14px}
+.bar{position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:2;border-bottom:1px solid var(--line)}
+.track{height:8px;background:var(--card);border-radius:9px;overflow:hidden}.fill{height:100%;background:var(--y);width:0;transition:width .2s}
+.bar small{display:block;margin-top:4px;color:var(--mute)}
+label.nm{display:block;font-weight:600;margin:16px 0 6px}
+input{width:100%;font:16px Manrope,sans-serif;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.key{background:var(--card);border-radius:12px;padding:12px;font-size:14px;margin:16px 0}
+.q{padding:16px 0;border-bottom:1px solid var(--line)}
+.q p{margin-bottom:10px}.q b{color:var(--mute);margin-right:4px}
+.o{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.o button{height:48px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:700 17px Manrope,sans-serif}
+.o button.on{background:var(--sel);color:var(--selk);border-color:var(--sel)}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:4px}
+.done{background:var(--card);border-radius:14px;padding:18px;margin-top:24px}
+.btn{font:800 16px Manrope,sans-serif;background:var(--sel);color:var(--selk);border:0;border-radius:12px;padding:14px;width:100%;margin-top:8px;min-height:50px}
+.btn.g{background:transparent;color:var(--ink);border:1px solid var(--line)}
+textarea{width:100%;font:13px/1.4 ui-monospace,monospace;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);height:90px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+</style></head><body><div class="w">
+<h1>Rate Ben as a leader</h1>
+<p>Ben is completing a leadership development assignment for his MGT 243 class and needs ratings from people who know him. It takes about 4 minutes. Please answer honestly; there are no right or wrong answers.</p>
+<p class="mute">Servant Leadership Questionnaire (Northouse, Ch. 10). "The leader" in each statement means Ben, in any group, team, or setting where you have seen him lead.</p>
+<div class="bar"><div class="track"><div class="fill" id="fill"></div></div><small id="prog"></small></div>
+<label class="nm" for="nm">Your first name</label><input id="nm" autocomplete="given-name" placeholder="So Ben knows who rated him">
+<div class="key">1 = Strongly disagree &middot; 2 = Disagree &middot; 3 = Disagree somewhat &middot; 4 = Undecided &middot; 5 = Agree somewhat &middot; 6 = Agree &middot; 7 = Strongly agree</div>
+<div id="qs"></div>
+<div class="done"><p><b>When you're done:</b> tap Send to text your answers to Ben, or Copy and paste them into a message to him.</p>
+<p class="mute" id="msg">Answer every item to finish.</p>
+<button class="btn" id="share">Send to Ben</button><button class="btn g" id="copy">Copy result</button>
+<p class="mute" style="margin-top:12px">Your result (you can also select this text and copy it):</p><textarea id="out" readonly></textarea></div>
+</div>
+<script>
+{
+const CODE='SERVANT',N=7,ITEMS=["Others would seek help from the leader if they had a personal problem.", "The leader emphasizes the importance of giving back to the community.", "The leader can tell if something work-related is going wrong.", "The leader gives others the responsibility to make important decisions about their own jobs.", "The leader makes others' career development a priority.", "The leader cares more about others' success than their own.", "The leader holds high ethical standards.", "The leader cares about others' personal well-being.", "The leader is always interested in helping people in the community.", "The leader is able to think through complex problems.", "The leader encourages others to handle important work decisions on their own.", "The leader is interested in making sure others reach their career goals.", "The leader puts others' best interests above their own.", "The leader is always honest.", "The leader takes time to talk to others on a personal level.", "The leader is involved in community activities.", "The leader has a thorough understanding of the organization and its goals.", "The leader gives others the freedom to handle difficult situations in the way they feel is best.", "The leader provides others with work experiences that enable them to develop new skills.", "The leader sacrifices their own interests to meet others' needs.", "The leader would not compromise ethical principles in order to meet success.", "The leader can recognize when others are feeling down without asking them.", "The leader encourages others to volunteer in the community.", "The leader can solve work problems with new or creative ideas.", "If others need to make important decisions at work, they do not need to consult the leader.", "The leader wants to know about others' career goals.", "The leader does what they can to make others' jobs easier.", "The leader values honesty more than profits."],LO='Strongly disagree',HI='Strongly agree';
+let v=[];try{v=JSON.parse(localStorage.getItem(CODE)||'[]')}catch(e){}
+const nm=document.getElementById('nm');try{nm.value=localStorage.getItem(CODE+'n')||''}catch(e){}
+const save=()=>{try{localStorage.setItem(CODE,JSON.stringify(v));localStorage.setItem(CODE+'n',nm.value)}catch(e){}};
+function res(){const n=(nm.value.trim()||'Anonymous').replace(/[|,]/g,' ');return 'MGT 243 leadership rating of Ben by '+n+'\n'+CODE+'|'+n+'|'+ITEMS.map((_,i)=>v[i]||0).join(',')}
+function draw(){
+ document.getElementById('qs').innerHTML=ITEMS.map((t,i)=>`<div class="q"><p><b>${i+1}.</b>${t}</p><div class="o">${Array.from({length:N},(_,k)=>`<button data-i="${i}" data-v="${k+1}" class="${v[i]===k+1?'on':''}" aria-pressed="${v[i]===k+1}">${k+1}</button>`).join('')}</div><div class="ends"><span>${LO}</span><span>${HI}</span></div></div>`).join('');
+ upd()}
+function upd(){const c=ITEMS.filter((_,i)=>v[i]).length;document.getElementById('fill').style.width=(c/ITEMS.length*100)+'%';document.getElementById('prog').textContent=c+' of '+ITEMS.length+' answered';
+ const all=c===ITEMS.length;document.getElementById('out').value=all?res():'';document.getElementById('msg').textContent=all?'All done, thank you!':'Answer every item to finish ('+(ITEMS.length-c)+' left).';
+ document.getElementById('share').style.display=navigator.share?'block':'none'}
+document.getElementById('qs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;v[+b.dataset.i]=+b.dataset.v;save();
+ b.parentNode.querySelectorAll('button').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});upd()});
+nm.addEventListener('input',()=>{save();upd()});
+const ready=()=>{if(ITEMS.some((_,i)=>!v[i])){const k=ITEMS.findIndex((_,i)=>!v[i]);document.querySelectorAll('.q')[k].scrollIntoView({behavior:'smooth',block:'center'});return false}if(!nm.value.trim()){nm.focus();document.getElementById('msg').textContent='Add your first name above, then send.';return false}return true};
+document.getElementById('copy').onclick=async()=>{if(!ready())return;const o=document.getElementById('out');try{await navigator.clipboard.writeText(res());document.getElementById('msg').textContent='Copied. Paste it into a text to Ben.'}catch(e){o.select();document.getElementById('msg').textContent='Copy blocked: the text below is selected, copy it manually.'}};
+document.getElementById('share').onclick=async()=>{if(!ready())return;try{await navigator.share({text:res()})}catch(e){}};
+draw();
+}
+</script></body></html>
